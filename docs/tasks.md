@@ -55,7 +55,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-toolbar-06, T-history-02
   - Estimate: 45
 
-- [ ] T-select-08: Selection (click + marquee) (75m)
+- [x] T-select-08: Selection (click + marquee) (75m)
   - Goal: Click and marquee selection; Shift add/remove; visual bounding box.
   - Files/paths: `src/canvas/controllers/SelectController.ts`, `src/canvas/overlays/SelectionOverlay.tsx`, `src/services/hittest.ts`
   - Key edits: Reverse z-order hit test; marquee extents; selection state ops.

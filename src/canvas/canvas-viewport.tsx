@@ -1,21 +1,40 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
+  useState,
   type PointerEventHandler,
 } from 'react'
 
-import { applyZoomAtPoint, screenDeltaToWorld } from './transform'
+import {
+  applyZoomAtPoint,
+  screenDeltaToWorld,
+  screenPointToWorld,
+  worldPointToScreen,
+} from './transform'
 import {
   MAX_ZOOM,
   MIN_ZOOM,
+  selectActiveTool,
   selectSettings,
+  selectShapes,
+  selectSelection,
   selectViewport,
   useAppSelector,
   useAppStore,
 } from '../state/store'
-import type { Vec2 } from '../types'
+import type { Shape, Vec2 } from '../types'
 import GridLayer from './layers/grid-layer'
+import SelectionOverlay, {
+  type ScreenRect,
+} from './overlays/selection-overlay'
+import {
+  createWorldMarquee,
+  getShapesWithinBounds,
+  hitTestShapes,
+} from '../services/hittest'
+import type { ShapeBounds } from '../services/geometry'
 
 const PAN_COMMIT_DELAY = 120
 
@@ -43,16 +62,39 @@ const initialPointerState: PointerState = {
 }
 
 export const CanvasViewport = () => {
+  const activeTool = useAppSelector(selectActiveTool)
   const viewport = useAppSelector(selectViewport)
   const settings = useAppSelector(selectSettings)
+  const shapes = useAppSelector(selectShapes)
+  const selectionIds = useAppSelector(selectSelection)
   const setViewport = useAppStore((state) => state.setViewport)
   const commit = useAppStore((state) => state.commit)
   const setSettings = useAppStore((state) => state.setSettings)
+  const select = useAppStore((state) => state.select)
+  const clearSelection = useAppStore((state) => state.clearSelection)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pointerState = useRef<PointerState>({ ...initialPointerState })
   const spacePressed = useRef(false)
   const commitTimer = useRef<number | undefined>(undefined)
+  const selectionSession = useRef<
+    | {
+        active: boolean
+        pointerId: number | null
+        originWorld: Vec2
+        originScreen: Vec2
+        currentWorld: Vec2
+        worldBounds: ShapeBounds | null
+        moved: boolean
+      }
+    | null
+  >(null)
+  const [marquee, setMarquee] = useState<ScreenRect | null>(null)
+
+  const selectedShapes = useMemo<Shape[]>(
+    () => shapes.filter((shape) => selectionIds.includes(shape.id)),
+    [shapes, selectionIds],
+  )
 
   const scheduleCommit = useCallback(
     (label: string) => {
@@ -102,22 +144,93 @@ export const CanvasViewport = () => {
 
   const handlePointerDown: PointerEventHandler<HTMLDivElement> = (event) => {
     if (event.button !== 0) return
-    if (!spacePressed.current && event.pointerType !== 'touch') return
 
     const node = containerRef.current
     if (!node) return
 
-    node.setPointerCapture(event.pointerId)
-    pointerState.current = {
+    const shouldPan =
+      spacePressed.current || event.pointerType === 'touch' || activeTool !== 'select'
+
+    if (shouldPan) {
+      node.setPointerCapture(event.pointerId)
+      pointerState.current = {
+        active: true,
+        pointerId: event.pointerId,
+        last: { x: event.clientX, y: event.clientY },
+      }
+      document.body.style.cursor = 'grabbing'
+      event.preventDefault()
+      return
+    }
+
+    const rect = node.getBoundingClientRect()
+    const screenPoint = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    }
+
+    const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
+
+    selectionSession.current = {
       active: true,
       pointerId: event.pointerId,
-      last: { x: event.clientX, y: event.clientY },
+      originWorld: worldPoint,
+      currentWorld: worldPoint,
+      worldBounds: null,
+      originScreen: { x: event.clientX, y: event.clientY },
+      moved: false,
     }
-    document.body.style.cursor = 'grabbing'
+
+    node.setPointerCapture(event.pointerId)
+    setMarquee(null)
     event.preventDefault()
   }
 
   const handlePointerMove: PointerEventHandler<HTMLDivElement> = (event) => {
+    const node = containerRef.current
+    const selection = selectionSession.current
+    if (selection && selection.active && selection.pointerId === event.pointerId && node) {
+      const rect = node.getBoundingClientRect()
+      const screenPoint = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      }
+      const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
+
+      selection.currentWorld = worldPoint
+
+      const distance = Math.hypot(
+        event.clientX - selection.originScreen.x,
+        event.clientY - selection.originScreen.y,
+      )
+      if (!selection.moved && distance > 4) {
+        selection.moved = true
+      }
+
+      if (selection.moved) {
+        const bounds = createWorldMarquee(selection.originWorld, selection.currentWorld)
+        selection.worldBounds = bounds
+        const topLeft = worldPointToScreen(
+          { x: bounds.minX, y: bounds.minY },
+          useAppStore.getState().viewport,
+        )
+        const bottomRight = worldPointToScreen(
+          { x: bounds.maxX, y: bounds.maxY },
+          useAppStore.getState().viewport,
+        )
+        setMarquee({
+          x: Math.min(topLeft.x, bottomRight.x),
+          y: Math.min(topLeft.y, bottomRight.y),
+          width: Math.abs(bottomRight.x - topLeft.x),
+          height: Math.abs(bottomRight.y - topLeft.y),
+        })
+      } else {
+        setMarquee(null)
+      }
+
+      return
+    }
+
     const current = pointerState.current
     if (!current.active || current.pointerId !== event.pointerId) return
 
@@ -132,6 +245,49 @@ export const CanvasViewport = () => {
 
   const handlePointerUp: PointerEventHandler<HTMLDivElement> = (event) => {
     const node = containerRef.current
+    const selection = selectionSession.current
+
+    if (selection && selection.active && selection.pointerId === event.pointerId) {
+      if (node && node.hasPointerCapture(event.pointerId)) {
+        node.releasePointerCapture(event.pointerId)
+      }
+
+      const store = useAppStore.getState()
+      const rect = node?.getBoundingClientRect()
+      let worldPoint: Vec2 | null = null
+
+      if (rect) {
+        const screenPoint = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }
+        worldPoint = screenPointToWorld(screenPoint, store.viewport)
+      }
+
+      if (selection.moved && selection.worldBounds) {
+        const ids = getShapesWithinBounds(shapes, selection.worldBounds).map(
+          (shape) => shape.id,
+        )
+        if (ids.length) {
+          select(ids, event.shiftKey ? 'toggle' : 'set')
+        } else if (!event.shiftKey) {
+          clearSelection()
+        }
+      } else if (worldPoint) {
+        const hit = hitTestShapes(shapes, worldPoint)
+        if (hit) {
+          select([hit.id], event.shiftKey ? 'toggle' : 'set')
+        } else if (!event.shiftKey) {
+          clearSelection()
+        }
+      }
+
+      selectionSession.current = null
+      setMarquee(null)
+      event.preventDefault()
+      return
+    }
+
     if (node && node.hasPointerCapture(event.pointerId)) {
       node.releasePointerCapture(event.pointerId)
     }
@@ -200,6 +356,12 @@ export const CanvasViewport = () => {
       onPointerLeave={handlePointerUp}
     >
       {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
+
+      <SelectionOverlay
+        selectedShapes={selectedShapes}
+        viewport={viewport}
+        marquee={marquee}
+      />
 
       <div className="pointer-events-none absolute inset-0 grid place-items-center text-(--color-muted-foreground)">
         <p className="text-sm font-medium">
