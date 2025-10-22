@@ -69,7 +69,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-toolbar-06, T-store-01
   - Estimate: 60
 
-- [ ] T-ellipse-10: Ellipse tool (60m)
+- [x] T-ellipse-10: Ellipse tool (60m)
   - Goal: Drag-to-create ellipse with rx/ry.
   - Files/paths: `src/canvas/controllers/EllipseController.ts`, `src/types/shapes.ts`
   - Key edits: Pointer drag, compute rx/ry; commit on mouseup.

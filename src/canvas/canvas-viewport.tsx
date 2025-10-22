@@ -42,6 +42,13 @@ import {
   updateRect,
   type RectDragState,
 } from './controllers/rect-controller'
+import {
+  beginEllipse,
+  cancelEllipse,
+  finalizeEllipse,
+  updateEllipse,
+  type EllipseDragState,
+} from './controllers/ellipse-controller'
 
 const PAN_COMMIT_DELAY = 120
 
@@ -98,6 +105,7 @@ export const CanvasViewport = () => {
   >(null)
   const [marquee, setMarquee] = useState<ScreenRect | null>(null)
   const rectState = useRef<RectDragState | null>(null)
+  const ellipseState = useRef<EllipseDragState | null>(null)
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -205,6 +213,15 @@ export const CanvasViewport = () => {
       return
     }
 
+    if (activeTool === 'ellipse') {
+      const state = beginEllipse(worldPoint, event.pointerId)
+      ellipseState.current = state
+      updateEllipse(state, worldPoint)
+      node.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      return
+    }
+
     const shouldPan =
       spacePressed.current || event.pointerType === 'touch' || activeTool !== 'select'
 
@@ -247,6 +264,22 @@ export const CanvasViewport = () => {
         }
         const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
         updateRect(state, worldPoint)
+        event.preventDefault()
+        return
+      }
+    }
+
+    if (ellipseState.current && containerRef.current) {
+      const state = ellipseState.current
+      const node = containerRef.current
+      if (node.hasPointerCapture(event.pointerId)) {
+        const rect = node.getBoundingClientRect()
+        const screenPoint = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }
+        const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
+        updateEllipse(state, worldPoint)
         event.preventDefault()
         return
       }
@@ -318,10 +351,53 @@ export const CanvasViewport = () => {
       rectState.current = null
       containerRef.current.releasePointerCapture(event.pointerId)
 
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        const worldPoint = screenPointToWorld(
+          {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          },
+          useAppStore.getState().viewport,
+        )
+        updateRect(state, worldPoint)
+      }
+
       if (Math.abs(state.current.x - state.origin.x) < 2 && Math.abs(state.current.y - state.origin.y) < 2) {
         cancelRect(state)
       } else {
         finalizeRect(state)
+      }
+
+      event.preventDefault()
+      return
+    }
+
+    if (
+      ellipseState.current &&
+      ellipseState.current.pointerId === event.pointerId &&
+      containerRef.current?.hasPointerCapture(event.pointerId)
+    ) {
+      const state = ellipseState.current
+      ellipseState.current = null
+      containerRef.current.releasePointerCapture(event.pointerId)
+
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        const worldPoint = screenPointToWorld(
+          {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          },
+          useAppStore.getState().viewport,
+        )
+        updateEllipse(state, worldPoint)
+      }
+
+      if (Math.abs(state.current.x - state.origin.x) < 2 && Math.abs(state.current.y - state.origin.y) < 2) {
+        cancelEllipse(state)
+      } else {
+        finalizeEllipse(state)
       }
 
       event.preventDefault()
