@@ -48,7 +48,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-store-01
   - Estimate: 60
 
-- [ ] T-shortcuts-07: Keyboard shortcuts (45m)
+- [x] T-shortcuts-07: Keyboard shortcuts (45m)
   - Goal: Global shortcuts for tools and edit actions (Z/Y/D/Delete).
   - Files/paths: `src/app/keyboard.ts`, `src/app/AppShell.tsx`, `src/state/store.ts`
   - Key edits: Keymap for V/R/O/L/A/P/T/I and Cmd/Ctrl+Z/Y/D/Delete/Backspace.

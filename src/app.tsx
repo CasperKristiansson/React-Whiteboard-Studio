@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import CanvasViewport from './canvas/canvas-viewport'
+import { useKeyboardShortcuts } from './app/keyboard'
 import Toolbar from './ui/toolbar'
 import ThemeToggle from './components/theme-toggle'
 import {
@@ -20,6 +21,8 @@ function App() {
   const activeTool = useAppSelector(selectActiveTool)
   const theme = useAppSelector(selectTheme)
   const setTheme = useAppStore((state) => state.setTheme)
+
+  useKeyboardShortcuts()
 
   useEffect(() => {
     if (typeof window === 'undefined') return

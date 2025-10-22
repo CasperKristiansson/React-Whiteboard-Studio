@@ -8,6 +8,7 @@ import {
   type Shape,
   type ThemePreference,
   type Transform,
+  type Vec2,
   type UUID,
 } from '../types'
 import {
@@ -74,6 +75,7 @@ export type AppActions = {
   commit: (label: string, options?: { squash?: boolean }) => void
   undo: () => void
   redo: () => void
+  duplicateSelection: () => void
 }
 
 export type AppStore = AppState & AppActions
@@ -264,6 +266,74 @@ export const useAppStore = create<AppStore>()(
         if (!state.dirty) {
           state.dirty = true
         }
+      })
+    },
+
+    duplicateSelection: () => {
+      set((state) => {
+        if (!state.selection.length) return
+
+        captureHistorySnapshot(state)
+
+        const timestamp = now()
+        const clones: Shape[] = []
+
+        const offsetPoints = (points: Vec2[]) =>
+          points.map((point) => ({ x: point.x + 16, y: point.y + 16 }))
+
+        state.selection.forEach((id) => {
+          const original = state.document.shapes.find((shape) => shape.id === id)
+          if (!original) return
+
+          const newId = createShapeId()
+          const zIndex = original.zIndex + 1
+
+          switch (original.type) {
+            case 'rect':
+            case 'ellipse':
+            case 'text':
+            case 'image':
+              clones.push({
+                ...original,
+                id: newId,
+                position: {
+                  x: original.position.x + 16,
+                  y: original.position.y + 16,
+                },
+                zIndex,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              } as Shape)
+              break
+            case 'line':
+            case 'arrow':
+              clones.push({
+                ...original,
+                id: newId,
+                points: offsetPoints(original.points),
+                zIndex,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              } as Shape)
+              break
+            case 'path':
+              clones.push({
+                ...original,
+                id: newId,
+                d: offsetPoints(original.d),
+                zIndex,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              })
+              break
+          }
+        })
+
+        if (!clones.length) return
+
+        state.document.shapes.push(...clones)
+        state.selection = clones.map((shape) => shape.id)
+        state.dirty = true
       })
     },
 
