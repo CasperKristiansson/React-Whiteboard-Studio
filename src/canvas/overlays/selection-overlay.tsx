@@ -1,6 +1,4 @@
-import type { Shape, Transform } from '../../types'
-import { getShapeBounds } from '../../services/geometry'
-import { worldPointToScreen } from '../transform'
+import type { PointerEvent } from 'react'
 
 export type ScreenRect = {
   x: number
@@ -9,60 +7,154 @@ export type ScreenRect = {
   height: number
 }
 
-const SelectionOverlay = ({
-  selectedShapes,
-  viewport,
-  marquee,
-}: {
-  selectedShapes: Shape[]
-  viewport: Transform
-  marquee: ScreenRect | null
-}) => {
-  if (!selectedShapes.length && !marquee) {
-    return null
+export type HandlePosition =
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+  | 'top'
+  | 'bottom'
+  | 'left'
+  | 'right'
+
+const HANDLE_POSITIONS: HandlePosition[] = [
+  'top-left',
+  'top',
+  'top-right',
+  'right',
+  'bottom-right',
+  'bottom',
+  'bottom-left',
+  'left',
+]
+
+const HANDLE_SIZE = 12
+const ROTATION_HANDLE_SIZE = 16
+const ROTATION_OFFSET = 32
+
+const getHandleStyle = (position: HandlePosition, bounds: ScreenRect): React.CSSProperties => {
+  const half = HANDLE_SIZE / 2
+  const centerX = bounds.x + bounds.width / 2
+  const centerY = bounds.y + bounds.height / 2
+
+  const style: React.CSSProperties = {
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    borderRadius: '9999px',
+    border: '1px solid rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(37, 99, 235, 0.9)',
+    boxShadow: '0 1px 2px rgba(15, 23, 42, 0.4)',
   }
 
-  const bbox = selectedShapes.length
-    ? selectedShapes.reduce(
-        (acc, shape) => {
-          const bounds = getShapeBounds(shape)
-          const topLeft = worldPointToScreen(
-            { x: bounds.minX, y: bounds.minY },
-            viewport,
-          )
-          const bottomRight = worldPointToScreen(
-            { x: bounds.maxX, y: bounds.maxY },
-            viewport,
-          )
+  switch (position) {
+    case 'top-left':
+      style.left = bounds.x - half
+      style.top = bounds.y - half
+      break
+    case 'top-right':
+      style.left = bounds.x + bounds.width - half
+      style.top = bounds.y - half
+      break
+    case 'bottom-left':
+      style.left = bounds.x - half
+      style.top = bounds.y + bounds.height - half
+      break
+    case 'bottom-right':
+      style.left = bounds.x + bounds.width - half
+      style.top = bounds.y + bounds.height - half
+      break
+    case 'top':
+      style.left = centerX - half
+      style.top = bounds.y - half
+      break
+    case 'bottom':
+      style.left = centerX - half
+      style.top = bounds.y + bounds.height - half
+      break
+    case 'left':
+      style.left = bounds.x - half
+      style.top = centerY - half
+      break
+    case 'right':
+      style.left = bounds.x + bounds.width - half
+      style.top = centerY - half
+      break
+  }
 
-          return {
-            minX: Math.min(acc.minX, topLeft.x),
-            minY: Math.min(acc.minY, topLeft.y),
-            maxX: Math.max(acc.maxX, bottomRight.x),
-            maxY: Math.max(acc.maxY, bottomRight.y),
-          }
-        },
-        {
-          minX: Number.POSITIVE_INFINITY,
-          minY: Number.POSITIVE_INFINITY,
-          maxX: Number.NEGATIVE_INFINITY,
-          maxY: Number.NEGATIVE_INFINITY,
-        },
-      )
-    : null
+  return style
+}
 
+const SelectionOverlay = ({
+  screenBounds,
+  marquee,
+  onMovePointerDown,
+  onHandlePointerDown,
+  onRotatePointerDown,
+}: {
+  screenBounds: ScreenRect | null
+  marquee: ScreenRect | null
+  onMovePointerDown?: (event: PointerEvent<HTMLDivElement>) => void
+  onHandlePointerDown?: (event: PointerEvent<HTMLDivElement>, handle: HandlePosition) => void
+  onRotatePointerDown?: (event: PointerEvent<HTMLDivElement>) => void
+}) => {
   return (
     <div className="pointer-events-none absolute inset-0">
-      {bbox && Number.isFinite(bbox.minX) && Number.isFinite(bbox.minY) ? (
-        <div
-          className="absolute rounded border border-dashed border-(--color-accent)/70 bg-(--color-accent)/5"
-          style={{
-            left: bbox.minX,
-            top: bbox.minY,
-            width: Math.max(1, bbox.maxX - bbox.minX),
-            height: Math.max(1, bbox.maxY - bbox.minY),
-          }}
-        />
+      {screenBounds ? (
+        <>
+          <div
+            className="pointer-events-auto absolute border border-(--color-accent)/80 bg-transparent"
+            style={{
+              left: screenBounds.x,
+              top: screenBounds.y,
+              width: Math.max(1, screenBounds.width),
+              height: Math.max(1, screenBounds.height),
+            }}
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              onMovePointerDown?.(event)
+            }}
+          />
+
+          {HANDLE_POSITIONS.map((position) => (
+            <div
+              key={position}
+              data-handle={position}
+              className="absolute transform-handle pointer-events-auto"
+              style={getHandleStyle(position, screenBounds)}
+              onPointerDown={(event) => {
+                event.stopPropagation()
+                onHandlePointerDown?.(event, position)
+              }}
+            />
+          ))}
+
+          <div
+            className="pointer-events-none absolute"
+            style={{
+              left: screenBounds.x + screenBounds.width / 2 - 1,
+              top: screenBounds.y - ROTATION_OFFSET + ROTATION_HANDLE_SIZE / 2,
+              width: 2,
+              height: ROTATION_OFFSET - ROTATION_HANDLE_SIZE,
+              backgroundColor: 'rgba(37, 99, 235, 0.6)',
+            }}
+          />
+
+          <div
+            className="transform-rotate-handle pointer-events-auto absolute border border-[rgba(255,255,255,0.9)] bg-(--color-accent)"
+            style={{
+              left: screenBounds.x + screenBounds.width / 2 - ROTATION_HANDLE_SIZE / 2,
+              top: screenBounds.y - ROTATION_OFFSET,
+              width: ROTATION_HANDLE_SIZE,
+              height: ROTATION_HANDLE_SIZE,
+              borderRadius: '9999px',
+              boxShadow: '0 1px 2px rgba(15, 23, 42, 0.4)',
+            }}
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              onRotatePointerDown?.(event)
+            }}
+          />
+        </>
       ) : null}
 
       {marquee ? (

@@ -1,0 +1,31 @@
+.transform-handle {
+  cursor: pointer;
+}
+
+.transform-handle[data-handle='top-left'],
+.transform-handle[data-handle='bottom-right'] {
+  cursor: nwse-resize;
+}
+
+.transform-handle[data-handle='top-right'],
+.transform-handle[data-handle='bottom-left'] {
+  cursor: nesw-resize;
+}
+
+.transform-handle[data-handle='top'],
+.transform-handle[data-handle='bottom'] {
+  cursor: ns-resize;
+}
+
+.transform-handle[data-handle='left'],
+.transform-handle[data-handle='right'] {
+  cursor: ew-resize;
+}
+
+.transform-rotate-handle {
+  cursor: grab;
+}
+
+.transform-rotate-handle:active {
+  cursor: grabbing;
+}
