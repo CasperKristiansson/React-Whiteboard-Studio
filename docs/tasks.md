@@ -83,14 +83,14 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-toolbar-06
   - Estimate: 60
 
-- [ ] T-arrow-12: Arrow tool (45m)
+- [x] T-arrow-12: Arrow tool (45m)
   - Goal: Polyline with arrowhead; adjustable head size.
   - Files/paths: `src/canvas/controllers/ArrowController.ts`, `src/types/shapes.ts`
   - Key edits: Arrowhead rendering, headSize property.
   - Dependencies: T-line-11
   - Estimate: 45
 
-- [ ] T-path-13: Freehand path + RDP smoothing (90m)
+- [x] T-path-13: Freehand path + RDP smoothing (90m)
   - Goal: Capture freehand strokes; apply Ramer–Douglas–Peucker with configurable epsilon.
   - Files/paths: `src/canvas/controllers/PathController.ts`, `src/utils/rdp.ts`
   - Key edits: Pointer sampling at throttle, smoothing, commit.

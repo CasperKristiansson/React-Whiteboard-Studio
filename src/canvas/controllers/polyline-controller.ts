@@ -1,5 +1,5 @@
-import type { Tool, Vec2 } from '../../types'
-import { createShapeId, useAppStore } from '../../state/store'
+import type { Vec2, LineShape, ArrowShape } from '../../types'
+import { createShapeId, useAppStore, type Tool } from '../../state/store'
 
 export type PolylineState = {
   id: string
@@ -23,24 +23,46 @@ export const beginPolyline = (
   const id = createShapeId()
   const store = useAppStore.getState()
 
-  store.addShape({
-    id,
-    type: tool,
-    position: point,
-    points: [{ x: 0, y: 0 }],
-    rotation: 0,
-    zIndex: timestamp,
-    stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    ...(tool === 'arrow' ? { headSize: 16 } : {}),
-  } as any)
+  const shape: LineShape | ArrowShape =
+    tool === 'arrow'
+      ? {
+          id,
+          type: 'arrow',
+          position: point,
+          points: [
+            { x: 0, y: 0 },
+            { x: 0, y: 0 },
+          ],
+          rotation: 0,
+          zIndex: timestamp,
+          stroke: DEFAULT_STROKE,
+          strokeWidth: 2,
+          headSize: 16,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        }
+      : {
+          id,
+          type: 'line',
+          position: point,
+          points: [
+            { x: 0, y: 0 },
+            { x: 0, y: 0 },
+          ],
+          rotation: 0,
+          zIndex: timestamp,
+          stroke: DEFAULT_STROKE,
+          strokeWidth: 2,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        }
+
+  store.addShape(shape)
 
   return {
     id,
     tool,
-    points: [{ x: 0, y: 0 }],
+    points: [point, point],
     position: point,
     pointerId,
     createdAt: timestamp,
@@ -49,56 +71,101 @@ export const beginPolyline = (
   }
 }
 
+const shouldSample = (current: Vec2, next: Vec2) =>
+  Math.hypot(next.x - current.x, next.y - current.y) >= 0.5
+
 export const updatePolyline = (state: PolylineState, point: Vec2) => {
+  if (!shouldSample(state.points[state.points.length - 1], point)) return
+
+  state.points[state.points.length - 1] = point
+
   const store = useAppStore.getState()
-  const lastPoint = state.points[state.points.length - 1]
-  state.points[state.points.length - 1] = {
-    x: point.x - state.position.x,
-    y: point.y - state.position.y,
-  }
+  const relativePoints = state.points.map((p) => ({
+    x: p.x - state.position.x,
+    y: p.y - state.position.y,
+  }))
 
-  store.addShape({
-    id: state.id,
-    type: state.tool,
-    position: state.position,
-    points: state.points,
-    rotation: 0,
-    zIndex: state.zIndex,
-    stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
-    createdAt: state.createdAt,
-    updatedAt: Date.now(),
-    ...(state.tool === 'arrow' ? { headSize: 16 } : {}),
-  } as any)
+  const shape: LineShape | ArrowShape =
+    state.tool === 'arrow'
+      ? {
+          id: state.id,
+          type: 'arrow',
+          position: state.position,
+          points: relativePoints,
+          rotation: 0,
+          zIndex: state.zIndex,
+          stroke: DEFAULT_STROKE,
+          strokeWidth: 2,
+          headSize: 16,
+          createdAt: state.createdAt,
+          updatedAt: Date.now(),
+        }
+      : {
+          id: state.id,
+          type: 'line',
+          position: state.position,
+          points: relativePoints,
+          rotation: 0,
+          zIndex: state.zIndex,
+          stroke: DEFAULT_STROKE,
+          strokeWidth: 2,
+          createdAt: state.createdAt,
+          updatedAt: Date.now(),
+        }
 
-  state.points[state.points.length - 1] = lastPoint
-}
-
-export const extendPolyline = (state: PolylineState, point: Vec2) => {
-  const relative: Vec2 = {
-    x: point.x - state.position.x,
-    y: point.y - state.position.y,
-  }
-  state.points.push(relative)
-  updatePolyline(state, point)
+  store.addShape(shape)
 }
 
 export const finalizePolyline = (state: PolylineState) => {
   if (state.locked) return
   const store = useAppStore.getState()
-  store.addShape({
-    id: state.id,
-    type: state.tool,
-    position: state.position,
-    points: state.points,
-    rotation: 0,
-    zIndex: state.zIndex,
-    stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
-    createdAt: state.createdAt,
-    updatedAt: Date.now(),
-    ...(state.tool === 'arrow' ? { headSize: 16 } : {}),
-  } as any)
+
+  const relativePoints = state.points.map((p) => ({
+    x: p.x - state.position.x,
+    y: p.y - state.position.y,
+  }))
+
+  if (
+    relativePoints.length <= 1 ||
+    (relativePoints.length === 2 &&
+      Math.hypot(
+        relativePoints[1].x - relativePoints[0].x,
+        relativePoints[1].y - relativePoints[0].y,
+      ) < 2)
+  ) {
+    cancelPolyline(state)
+    return
+  }
+
+  const shape: LineShape | ArrowShape =
+    state.tool === 'arrow'
+      ? {
+          id: state.id,
+          type: 'arrow',
+          position: state.position,
+          points: relativePoints,
+          rotation: 0,
+          zIndex: state.zIndex,
+          stroke: DEFAULT_STROKE,
+          strokeWidth: 2,
+          headSize: 16,
+          createdAt: state.createdAt,
+          updatedAt: Date.now(),
+        }
+      : {
+          id: state.id,
+          type: 'line',
+          position: state.position,
+          points: relativePoints,
+          rotation: 0,
+          zIndex: state.zIndex,
+          stroke: DEFAULT_STROKE,
+          strokeWidth: 2,
+          createdAt: state.createdAt,
+          updatedAt: Date.now(),
+        }
+
+  store.addShape(shape)
   store.commit(state.tool === 'arrow' ? 'Draw arrow' : 'Draw line')
   store.select([state.id], 'set')
   state.locked = true
