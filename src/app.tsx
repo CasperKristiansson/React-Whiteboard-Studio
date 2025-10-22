@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import CanvasViewport from './canvas/canvas-viewport'
+import Toolbar from './ui/toolbar'
 import ThemeToggle from './components/theme-toggle'
 import {
   selectActiveTool,
@@ -67,22 +68,22 @@ function App() {
   }, [theme])
 
   return (
-    <main className="min-h-screen bg-[color:var(--color-app-bg)] text-[color:var(--color-app-foreground)] transition-colors">
+    <main className="min-h-screen bg-(--color-app-bg) text-(--color-app-foreground) transition-colors">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-6 py-12">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex max-w-2xl flex-col gap-3">
             <h1 className="text-4xl font-semibold sm:text-5xl">React Whiteboard</h1>
-            <p className="text-lg font-medium text-[color:var(--color-muted-foreground)]">
+            <p className="text-lg font-medium text-(--color-muted-foreground)">
               Active tool:{' '}
-              <span className="font-semibold text-[color:var(--color-app-foreground)]">{activeTool}</span>
+              <span className="font-semibold text-(--color-app-foreground)">{activeTool}</span>
             </p>
-            <p className="text-sm text-[color:var(--color-muted-foreground)]">
+            <p className="text-sm text-(--color-muted-foreground)">
               Pan with{' '}
-              <span className="rounded bg-[color:var(--color-button-bg)] px-1.5 py-0.5 font-mono text-xs text-[color:var(--color-button-text)]">
+              <span className="rounded bg-(--color-button-bg) px-1.5 py-0.5 font-mono text-xs text-(--color-button-text)">
                 Space + drag
               </span>
               , trackpad two-finger drag, or zoom with pinch /
-              <span className="rounded bg-[color:var(--color-button-bg)] px-1.5 py-0.5 font-mono text-xs text-[color:var(--color-button-text)]">
+              <span className="rounded bg-(--color-button-bg) px-1.5 py-0.5 font-mono text-xs text-(--color-button-text)">
                 {' '}
                 Ctrl/Cmd + wheel
               </span>
@@ -92,8 +93,14 @@ function App() {
           <ThemeToggle />
         </header>
 
-        <div className="rounded-3xl border border-[color:var(--color-elevated-border)] bg-[color:var(--color-elevated-bg)] p-6 shadow-xl backdrop-blur">
-          <CanvasViewport />
+        <div className="flex flex-col gap-6">
+          <div className="inline-flex justify-center">
+            <Toolbar />
+          </div>
+
+          <div className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-6 shadow-xl backdrop-blur">
+            <CanvasViewport />
+          </div>
         </div>
       </div>
     </main>

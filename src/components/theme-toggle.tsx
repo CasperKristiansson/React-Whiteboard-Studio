@@ -9,13 +9,13 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
 
 const getButtonClassName = (active: boolean) => {
   const base =
-    'rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)]'
+    'rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)'
 
   if (active) {
-    return `${base} border-[color:var(--color-button-active-border)] bg-[color:var(--color-button-active-bg)] text-[color:var(--color-button-text)] shadow`
+    return `${base} border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow`
   }
 
-  return `${base} border-transparent bg-[color:var(--color-button-bg)] text-[color:var(--color-button-muted-text)] hover:bg-[color:var(--color-button-hover-bg)]`
+  return `${base} border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)`
 }
 
 const ThemeToggle = () => {
@@ -23,7 +23,7 @@ const ThemeToggle = () => {
   const setTheme = useAppStore((state) => state.setTheme)
 
   return (
-    <div className="flex items-center gap-1 rounded-full border border-[color:var(--color-elevated-border)] bg-[color:var(--color-elevated-bg)] px-1 py-1">
+    <div className="flex items-center gap-1 rounded-full border border-(--color-elevated-border) bg-(--color-elevated-bg) px-1 py-1">
       {THEME_OPTIONS.map((option) => {
         const active = option.value === theme
         return (

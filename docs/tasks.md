@@ -41,7 +41,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-store-01
   - Estimate: 30
 
-- [ ] T-toolbar-06: Toolbar skeleton and tool switching (60m)
+- [x] T-toolbar-06: Toolbar skeleton and tool switching (60m)
   - Goal: Floating toolbar (top-center) with tool buttons; wire to `activeTool`.
   - Files/paths: `src/ui/Toolbar.tsx`, `src/state/store.ts`
   - Key edits: Tool buttons for V/R/O/L/A/P/T/I; active state; a11y roles.
