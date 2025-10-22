@@ -10,6 +10,14 @@ import {
   type Transform,
   type UUID,
 } from '../types'
+import {
+  cloneDocument,
+  cloneSelection,
+  createHistoryEntry,
+  createHistoryState,
+  type HistoryEntry,
+  type HistoryState,
+} from './history'
 
 const MIN_ZOOM = 0.1
 const MAX_ZOOM = 16
@@ -46,6 +54,8 @@ export type AppState = {
   theme: ThemePreference
   /** Indicates unsaved document changes */
   dirty: boolean
+  /** Undo/redo history state */
+  history: HistoryState
 }
 
 export type AppActions = {
@@ -61,6 +71,9 @@ export type AppActions = {
   setSelection: (ids: UUID[]) => void
   clearSelection: () => void
   markClean: () => void
+  commit: (label: string, options?: { squash?: boolean }) => void
+  undo: () => void
+  redo: () => void
 }
 
 export type AppStore = AppState & AppActions
@@ -101,8 +114,10 @@ const ensureSelectionIds = (ids: UUID[], shapes: Shape[]): UUID[] => {
   return unique
 }
 
+const initialDocument = createInitialDocument()
+
 const initialState: AppState = {
-  document: createInitialDocument(),
+  document: initialDocument,
   selection: [],
   activeTool: 'select',
   viewport: { ...DEFAULT_TRANSFORM },
@@ -112,6 +127,32 @@ const initialState: AppState = {
   },
   theme: 'system',
   dirty: false,
+  history: createHistoryState(),
+}
+
+const trimStack = (stack: HistoryEntry[], capacity: number) => {
+  while (stack.length > capacity) {
+    stack.shift()
+  }
+}
+
+const applyHistoryEntry = (state: AppState, entry: HistoryEntry) => {
+  const restored = cloneDocument(entry.document)
+  state.document = restored
+  state.viewport = { ...restored.viewport }
+  state.theme = restored.theme
+  state.selection = cloneSelection(entry.selection)
+  state.dirty = true
+  state.history.pending = null
+}
+
+const captureHistorySnapshot = (state: AppState) => {
+  if (!state.history.pending) {
+    state.history.pending = createHistoryEntry(state.document, state.selection)
+  }
+  if (state.history.future.length) {
+    state.history.future = []
+  }
 }
 
 export const useAppStore = create<AppStore>()(
@@ -126,6 +167,7 @@ export const useAppStore = create<AppStore>()(
 
     setViewport: (update) => {
       set((state) => {
+        captureHistorySnapshot(state)
         const nextScale =
           update.scale !== undefined
             ? clamp(update.scale, MIN_ZOOM, MAX_ZOOM)
@@ -150,6 +192,7 @@ export const useAppStore = create<AppStore>()(
 
     setTheme: (theme) => {
       set((state) => {
+        captureHistorySnapshot(state)
         state.theme = theme
         state.document.theme = theme
         state.dirty = true
@@ -158,19 +201,19 @@ export const useAppStore = create<AppStore>()(
 
     replaceDocument: (document) => {
       set((state) => {
-        state.document = {
-          ...document,
-          viewport: { ...document.viewport },
-        }
-        state.viewport = { ...document.viewport }
-        state.theme = document.theme
+        const restored = cloneDocument(document)
+        state.document = restored
+        state.viewport = { ...restored.viewport }
+        state.theme = restored.theme
         state.selection = []
         state.dirty = false
+        state.history = createHistoryState()
       })
     },
 
     addShape: (shape) => {
       set((state) => {
+        captureHistorySnapshot(state)
         const timestamp = now()
         const exists = state.document.shapes.find((s) => s.id === shape.id)
         const nextShape: Shape = exists
@@ -201,6 +244,7 @@ export const useAppStore = create<AppStore>()(
         const target = state.document.shapes.find((shape) => shape.id === id)
         if (!target) return
 
+        captureHistorySnapshot(state)
         updater(target)
         target.updatedAt = now()
         state.dirty = true
@@ -211,6 +255,7 @@ export const useAppStore = create<AppStore>()(
       if (!ids.length) return
 
       set((state) => {
+        captureHistorySnapshot(state)
         state.document.shapes = state.document.shapes.filter(
           (shape) => !ids.includes(shape.id),
         )
@@ -268,6 +313,74 @@ export const useAppStore = create<AppStore>()(
         state.dirty = false
       })
     },
+
+    commit: (label, options) => {
+      set((state) => {
+        const pending = state.history.pending
+        if (!pending) return
+
+        pending.label = label
+        pending.at = now()
+
+        if (options?.squash && state.history.past.length) {
+          state.history.past[state.history.past.length - 1] = pending
+        } else {
+          state.history.past.push(pending)
+          trimStack(state.history.past, state.history.capacity)
+        }
+
+        state.history.pending = null
+        state.history.future = []
+      })
+    },
+
+    undo: () => {
+      set((state) => {
+        const { history } = state
+
+        if (history.pending) {
+          const previous = history.pending
+          const currentSnapshot = createHistoryEntry(
+            state.document,
+            state.selection,
+            previous.label,
+          )
+          history.future.push(currentSnapshot)
+          trimStack(history.future, history.capacity)
+          applyHistoryEntry(state, previous)
+          return
+        }
+
+        if (!history.past.length) return
+
+        const snapshot = history.past.pop()!
+        const currentSnapshot = createHistoryEntry(
+          state.document,
+          state.selection,
+          snapshot.label,
+        )
+        history.future.push(currentSnapshot)
+        trimStack(history.future, history.capacity)
+        applyHistoryEntry(state, snapshot)
+      })
+    },
+
+    redo: () => {
+      set((state) => {
+        const { history } = state
+        if (!history.future.length) return
+
+        const snapshot = history.future.pop()!
+        const currentSnapshot = createHistoryEntry(
+          state.document,
+          state.selection,
+          snapshot.label,
+        )
+        history.past.push(currentSnapshot)
+        trimStack(history.past, history.capacity)
+        applyHistoryEntry(state, snapshot)
+      })
+    },
   })),
 )
 
@@ -279,6 +392,10 @@ export const selectViewport = (state: AppStore) => state.viewport
 export const selectSettings = (state: AppStore) => state.settings
 export const selectTheme = (state: AppStore) => state.theme
 export const selectDirty = (state: AppStore) => state.dirty
+export const selectCanUndo = (state: AppStore) =>
+  state.history.pending !== null || state.history.past.length > 0
+export const selectCanRedo = (state: AppStore) =>
+  state.history.future.length > 0
 
 export const useAppSelector = <T,>(selector: (state: AppStore) => T) =>
   useAppStore(selector)

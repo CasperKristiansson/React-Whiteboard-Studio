@@ -13,7 +13,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: None
   - Estimate: 60
 
-- [ ] T-history-01: Command history ring buffer (75m)
+- [x] T-history-01: Command history ring buffer (75m)
   - Goal: Add bounded undo/redo with coalesced drags and `commit(label)` API.
   - Files/paths: `src/state/history.ts`, `src/state/store.ts`
   - Key edits: Ring buffer with N=200, inverse ops/snapshot strategy, integrate with store actions.
