@@ -27,7 +27,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-store-01
   - Estimate: 90
 
-- [ ] T-grid-04: Background grid layer (toggle) (45m)
+- [x] T-grid-04: Background grid layer (toggle) (45m)
   - Goal: Infinite pattern grid drawn in background, toggle via UI or settings.
   - Files/paths: `src/canvas/layers/GridLayer.tsx`, `src/state/store.ts`
   - Key edits: Grid draw routine using world units (5 px), toggle state.

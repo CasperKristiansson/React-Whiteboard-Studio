@@ -9,11 +9,13 @@ import { applyZoomAtPoint, screenDeltaToWorld } from './transform'
 import {
   MAX_ZOOM,
   MIN_ZOOM,
+  selectSettings,
   selectViewport,
   useAppSelector,
   useAppStore,
 } from '../state/store'
 import type { Vec2 } from '../types'
+import GridLayer from './layers/grid-layer'
 
 const PAN_COMMIT_DELAY = 120
 
@@ -42,8 +44,10 @@ const initialPointerState: PointerState = {
 
 export const CanvasViewport = () => {
   const viewport = useAppSelector(selectViewport)
+  const settings = useAppSelector(selectSettings)
   const setViewport = useAppStore((state) => state.setViewport)
   const commit = useAppStore((state) => state.commit)
+  const setSettings = useAppStore((state) => state.setSettings)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pointerState = useRef<PointerState>({ ...initialPointerState })
@@ -195,15 +199,28 @@ export const CanvasViewport = () => {
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
     >
+      {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
+
       <div className="pointer-events-none absolute inset-0 grid place-items-center text-slate-600">
         <p className="text-sm font-medium">
           Canvas viewport placeholder – pan with Space + drag, zoom with pinch/ctrl+wheel.
         </p>
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 left-4 rounded bg-slate-800/80 px-3 py-2 text-xs font-mono text-slate-200 shadow-lg">
+      <div className="absolute bottom-4 left-4 rounded bg-slate-800/80 px-3 py-2 text-xs font-mono text-slate-200 shadow-lg">
         <div>Pan: x {viewport.x.toFixed(2)}, y {viewport.y.toFixed(2)}</div>
         <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
+      </div>
+
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
+          className="rounded border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs font-medium text-slate-200 shadow transition hover:bg-slate-700/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-pressed={settings.gridVisible}
+        >
+          {settings.gridVisible ? 'Hide grid' : 'Show grid'}
+        </button>
       </div>
     </div>
   )
