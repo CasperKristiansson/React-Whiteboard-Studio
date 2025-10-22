@@ -62,7 +62,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-viewport-03, T-store-01
   - Estimate: 75
 
-- [ ] T-rect-09: Rectangle tool (60m)
+- [x] T-rect-09: Rectangle tool (60m)
   - Goal: Drag-to-create rectangle with default style; supports corner radius prop.
   - Files/paths: `src/canvas/controllers/RectController.ts`, `src/types/shapes.ts`
   - Key edits: Pointer drag, transient shape preview, commit on mouseup.

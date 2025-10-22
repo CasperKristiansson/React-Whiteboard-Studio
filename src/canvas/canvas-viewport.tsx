@@ -35,6 +35,13 @@ import {
   hitTestShapes,
 } from '../services/hittest'
 import type { ShapeBounds } from '../services/geometry'
+import {
+  beginRect,
+  cancelRect,
+  finalizeRect,
+  updateRect,
+  type RectDragState,
+} from './controllers/rect-controller'
 
 const PAN_COMMIT_DELAY = 120
 
@@ -85,11 +92,12 @@ export const CanvasViewport = () => {
         originScreen: Vec2
         currentWorld: Vec2
         worldBounds: ShapeBounds | null
-        moved: boolean
-      }
+      moved: boolean
+    }
     | null
   >(null)
   const [marquee, setMarquee] = useState<ScreenRect | null>(null)
+  const rectState = useRef<RectDragState | null>(null)
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -121,11 +129,44 @@ export const CanvasViewport = () => {
       spacePressed.current = false
     }
 
-    window.addEventListener('keydown', handleKeyDown, true)
+    const handleKeyDownWithEscape = (event: KeyboardEvent) => {
+      if (event.code === 'Escape') {
+        if (rectState.current) {
+          cancelRect(rectState.current)
+          if (rectState.current.pointerId != null) {
+            const node = containerRef.current
+            if (node && node.hasPointerCapture(rectState.current.pointerId)) {
+              node.releasePointerCapture(rectState.current.pointerId)
+            }
+          }
+          rectState.current = null
+          event.preventDefault()
+          return
+        }
+
+        if (selectionSession.current) {
+          const session = selectionSession.current
+          if (session?.pointerId != null) {
+            const node = containerRef.current
+            if (node && node.hasPointerCapture(session.pointerId)) {
+              node.releasePointerCapture(session.pointerId)
+            }
+          }
+          selectionSession.current = null
+          setMarquee(null)
+          event.preventDefault()
+          return
+        }
+      }
+
+      handleKeyDown(event)
+    }
+
+    window.addEventListener('keydown', handleKeyDownWithEscape, true)
     window.addEventListener('keyup', handleKeyUp, true)
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown, true)
+      window.removeEventListener('keydown', handleKeyDownWithEscape, true)
       window.removeEventListener('keyup', handleKeyUp, true)
     }
   }, [])
@@ -148,6 +189,22 @@ export const CanvasViewport = () => {
     const node = containerRef.current
     if (!node) return
 
+    const rect = node.getBoundingClientRect()
+    const screenPoint = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    }
+    const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
+
+    if (activeTool === 'rect') {
+      const state = beginRect(worldPoint, event.pointerId)
+      rectState.current = state
+      updateRect(state, worldPoint)
+      node.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      return
+    }
+
     const shouldPan =
       spacePressed.current || event.pointerType === 'touch' || activeTool !== 'select'
 
@@ -162,14 +219,6 @@ export const CanvasViewport = () => {
       event.preventDefault()
       return
     }
-
-    const rect = node.getBoundingClientRect()
-    const screenPoint = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    }
-
-    const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
 
     selectionSession.current = {
       active: true,
@@ -187,6 +236,22 @@ export const CanvasViewport = () => {
   }
 
   const handlePointerMove: PointerEventHandler<HTMLDivElement> = (event) => {
+    if (rectState.current && containerRef.current) {
+      const state = rectState.current
+      const node = containerRef.current
+      if (node.hasPointerCapture(event.pointerId)) {
+        const rect = node.getBoundingClientRect()
+        const screenPoint = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }
+        const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
+        updateRect(state, worldPoint)
+        event.preventDefault()
+        return
+      }
+    }
+
     const node = containerRef.current
     const selection = selectionSession.current
     if (selection && selection.active && selection.pointerId === event.pointerId && node) {
@@ -244,6 +309,25 @@ export const CanvasViewport = () => {
   }
 
   const handlePointerUp: PointerEventHandler<HTMLDivElement> = (event) => {
+    if (
+      rectState.current &&
+      rectState.current.pointerId === event.pointerId &&
+      containerRef.current?.hasPointerCapture(event.pointerId)
+    ) {
+      const state = rectState.current
+      rectState.current = null
+      containerRef.current.releasePointerCapture(event.pointerId)
+
+      if (Math.abs(state.current.x - state.origin.x) < 2 && Math.abs(state.current.y - state.origin.y) < 2) {
+        cancelRect(state)
+      } else {
+        finalizeRect(state)
+      }
+
+      event.preventDefault()
+      return
+    }
+
     const node = containerRef.current
     const selection = selectionSession.current
 
