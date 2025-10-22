@@ -1,0 +1,54 @@
+:root {
+  color-scheme: light;
+  --color-app-bg: #f8fafc;
+  --color-app-foreground: #0f172a;
+  --color-muted-foreground: #475569;
+  --color-elevated-bg: rgba(255, 255, 255, 0.85);
+  --color-elevated-border: rgba(148, 163, 184, 0.4);
+  --color-elevated-foreground: #0f172a;
+  --color-button-bg: rgba(255, 255, 255, 0.8);
+  --color-button-border: rgba(148, 163, 184, 0.6);
+  --color-button-hover-bg: rgba(99, 102, 241, 0.14);
+  --color-button-active-bg: rgba(37, 99, 235, 0.18);
+  --color-button-active-border: rgba(37, 99, 235, 0.56);
+  --color-button-text: #0f172a;
+  --color-button-muted-text: #475569;
+  --color-accent: #2563eb;
+  --color-canvas-bg: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-app-bg: #020617;
+  --color-app-foreground: #e2e8f0;
+  --color-muted-foreground: #94a3b8;
+  --color-elevated-bg: rgba(15, 23, 42, 0.78);
+  --color-elevated-border: rgba(148, 163, 184, 0.35);
+  --color-elevated-foreground: #f8fafc;
+  --color-button-bg: rgba(30, 41, 59, 0.72);
+  --color-button-border: rgba(148, 163, 184, 0.38);
+  --color-button-hover-bg: rgba(59, 130, 246, 0.28);
+  --color-button-active-bg: rgba(37, 99, 235, 0.38);
+  --color-button-active-border: rgba(96, 165, 250, 0.6);
+  --color-button-text: #f1f5f9;
+  --color-button-muted-text: #cbd5f5;
+  --color-accent: #60a5fa;
+  --color-canvas-bg: rgba(15, 23, 42, 0.72);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-app-bg);
+  color: var(--color-app-foreground);
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+* {
+  font-family: inherit;
+}
+
+a {
+  color: var(--color-accent);
+}

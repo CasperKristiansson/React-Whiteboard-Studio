@@ -1,25 +1,100 @@
+import { useEffect } from 'react'
+
 import CanvasViewport from './canvas/canvas-viewport'
-import { selectActiveTool, useAppSelector } from './state/store'
+import ThemeToggle from './components/theme-toggle'
+import {
+  selectActiveTool,
+  selectTheme,
+  useAppSelector,
+  useAppStore,
+} from './state/store'
+import type { ThemePreference } from './types'
+
+const THEME_STORAGE_KEY = 'draw.theme'
+
+const isThemePreference = (value: string | null): value is ThemePreference =>
+  value === 'light' || value === 'dark' || value === 'system'
 
 function App() {
   const activeTool = useAppSelector(selectActiveTool)
+  const theme = useAppSelector(selectTheme)
+  const setTheme = useAppStore((state) => state.setTheme)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
+    if (isThemePreference(stored) && stored !== theme) {
+      setTheme(stored)
+    }
+  }, [setTheme, theme])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+  }, [theme])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const root = document.documentElement
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const applyTheme = (resolved: 'light' | 'dark') => {
+      root.dataset.theme = resolved
+      root.style.colorScheme = resolved
+    }
+
+    const sync = () => {
+      if (theme === 'system') {
+        applyTheme(media.matches ? 'dark' : 'light')
+      } else {
+        applyTheme(theme)
+      }
+    }
+
+    sync()
+
+    const handleMediaChange = (event: MediaQueryListEvent) => {
+      if (theme === 'system') {
+        applyTheme(event.matches ? 'dark' : 'light')
+      }
+    }
+
+    media.addEventListener('change', handleMediaChange)
+    return () => {
+      media.removeEventListener('change', handleMediaChange)
+    }
+  }, [theme])
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
+    <main className="min-h-screen bg-[color:var(--color-app-bg)] text-[color:var(--color-app-foreground)] transition-colors">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-6 py-12">
-        <header className="flex flex-col gap-4">
-          <h1 className="text-4xl font-semibold sm:text-5xl">React Whiteboard</h1>
-          <p className="text-lg font-medium text-slate-300">
-            Active tool: <span className="font-semibold text-white">{activeTool}</span>
-          </p>
-          <p className="max-w-2xl text-sm text-slate-400">
-            Pan with <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-xs">Space + drag</span>,
-            trackpad two-finger drag, or zoom with pinch / <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-xs">Ctrl/Cmd + wheel</span>.
-            The viewport currently renders a placeholder while core drawing tools are under development.
-          </p>
+        <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex max-w-2xl flex-col gap-3">
+            <h1 className="text-4xl font-semibold sm:text-5xl">React Whiteboard</h1>
+            <p className="text-lg font-medium text-[color:var(--color-muted-foreground)]">
+              Active tool:{' '}
+              <span className="font-semibold text-[color:var(--color-app-foreground)]">{activeTool}</span>
+            </p>
+            <p className="text-sm text-[color:var(--color-muted-foreground)]">
+              Pan with{' '}
+              <span className="rounded bg-[color:var(--color-button-bg)] px-1.5 py-0.5 font-mono text-xs text-[color:var(--color-button-text)]">
+                Space + drag
+              </span>
+              , trackpad two-finger drag, or zoom with pinch /
+              <span className="rounded bg-[color:var(--color-button-bg)] px-1.5 py-0.5 font-mono text-xs text-[color:var(--color-button-text)]">
+                {' '}
+                Ctrl/Cmd + wheel
+              </span>
+              . The viewport currently renders a placeholder while core drawing tools are under development.
+            </p>
+          </div>
+          <ThemeToggle />
         </header>
 
-        <CanvasViewport />
+        <div className="rounded-3xl border border-[color:var(--color-elevated-border)] bg-[color:var(--color-elevated-bg)] p-6 shadow-xl backdrop-blur">
+          <CanvasViewport />
+        </div>
       </div>
     </main>
   )

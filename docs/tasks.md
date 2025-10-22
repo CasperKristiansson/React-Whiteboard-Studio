@@ -34,7 +34,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-viewport-03
   - Estimate: 45
 
-- [ ] T-theme-05: Theme toggle and tokens (30m)
+- [x] T-theme-05: Theme toggle and tokens (30m)
   - Goal: Light/Dark/System theme via Tailwind + CSS vars; content colors unchanged.
   - Files/paths: `src/app/AppShell.tsx`, `src/styles/tokens.css`, `tailwind.config.ts`
   - Key edits: Theme state, prefers-color-scheme sync, data-theme/class application.

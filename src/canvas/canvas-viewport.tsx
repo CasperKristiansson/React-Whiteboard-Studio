@@ -192,7 +192,7 @@ export const CanvasViewport = () => {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-[520px] w-full flex-1 select-none overflow-hidden rounded-xl border border-slate-800 bg-slate-900"
+      className="relative flex h-[520px] w-full flex-1 select-none overflow-hidden rounded-xl border border-[color:var(--color-elevated-border)] bg-[color:var(--color-canvas-bg)] backdrop-blur-sm transition-colors"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -201,13 +201,13 @@ export const CanvasViewport = () => {
     >
       {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
 
-      <div className="pointer-events-none absolute inset-0 grid place-items-center text-slate-600">
+      <div className="pointer-events-none absolute inset-0 grid place-items-center text-[color:var(--color-muted-foreground)]">
         <p className="text-sm font-medium">
           Canvas viewport placeholder – pan with Space + drag, zoom with pinch/ctrl+wheel.
         </p>
       </div>
 
-      <div className="absolute bottom-4 left-4 rounded bg-slate-800/80 px-3 py-2 text-xs font-mono text-slate-200 shadow-lg">
+      <div className="absolute bottom-4 left-4 rounded border border-[color:var(--color-elevated-border)] bg-[color:var(--color-elevated-bg)] px-3 py-2 text-xs font-mono text-[color:var(--color-elevated-foreground)] shadow-lg backdrop-blur">
         <div>Pan: x {viewport.x.toFixed(2)}, y {viewport.y.toFixed(2)}</div>
         <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
       </div>
@@ -216,8 +216,9 @@ export const CanvasViewport = () => {
         <button
           type="button"
           onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
-          className="rounded border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs font-medium text-slate-200 shadow transition hover:bg-slate-700/80 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded border border-[color:var(--color-button-border)] bg-[color:var(--color-button-bg)] px-3 py-1 text-xs font-medium text-[color:var(--color-button-text)] shadow transition hover:bg-[color:var(--color-button-hover-bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)]"
           aria-pressed={settings.gridVisible}
+          aria-label={settings.gridVisible ? 'Hide grid' : 'Show grid'}
         >
           {settings.gridVisible ? 'Hide grid' : 'Show grid'}
         </button>
