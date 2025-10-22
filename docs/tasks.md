@@ -6,7 +6,7 @@ This plan converts the approved requirements and design into small, reversible t
 
 ## A) Backlog
 
-- [ ] T-store-01: Bootstrap state store and domain types (60m)
+- [x] T-store-01: Bootstrap state store and domain types (60m)
   - Goal: Initialize Zustand store with Immer, domain types (shapes, document, viewport, settings), and selectors.
   - Files/paths: `src/state/store.ts`, `src/types/shapes.ts`, `src/types/document.ts`, `src/types/common.ts`
   - Key edits: Define `Shape`, `DocumentV1`, `Transform`; implement store slices for document, selection, viewport, settings.
@@ -344,4 +344,3 @@ Please review and approve:
 - docs/docs/tasks.md
 
 Once approved, we’ll implement milestone M1 as a small PR guarded by local feature flags where applicable.
-
