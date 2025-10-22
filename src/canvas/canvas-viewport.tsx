@@ -49,6 +49,14 @@ import {
   updateEllipse,
   type EllipseDragState,
 } from './controllers/ellipse-controller'
+import {
+  beginPolyline,
+  cancelPolyline,
+  extendPolyline,
+  finalizePolyline,
+  updatePolyline,
+  type PolylineState,
+} from './controllers/polyline-controller'
 
 const PAN_COMMIT_DELAY = 120
 
@@ -106,6 +114,7 @@ export const CanvasViewport = () => {
   const [marquee, setMarquee] = useState<ScreenRect | null>(null)
   const rectState = useRef<RectDragState | null>(null)
   const ellipseState = useRef<EllipseDragState | null>(null)
+  const polylineState = useRef<PolylineState | null>(null)
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -222,6 +231,15 @@ export const CanvasViewport = () => {
       return
     }
 
+    if (activeTool === 'line' || activeTool === 'arrow') {
+      const state = beginPolyline(activeTool, worldPoint, event.pointerId)
+      polylineState.current = state
+      updatePolyline(state, worldPoint)
+      node.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      return
+    }
+
     const shouldPan =
       spacePressed.current || event.pointerType === 'touch' || activeTool !== 'select'
 
@@ -280,6 +298,22 @@ export const CanvasViewport = () => {
         }
         const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
         updateEllipse(state, worldPoint)
+        event.preventDefault()
+        return
+      }
+    }
+
+    if (polylineState.current && containerRef.current) {
+      const state = polylineState.current
+      const node = containerRef.current
+      if (node.hasPointerCapture(event.pointerId)) {
+        const rect = node.getBoundingClientRect()
+        const screenPoint = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        }
+        const worldPoint = screenPointToWorld(screenPoint, useAppStore.getState().viewport)
+        updatePolyline(state, worldPoint)
         event.preventDefault()
         return
       }
@@ -398,6 +432,29 @@ export const CanvasViewport = () => {
         cancelEllipse(state)
       } else {
         finalizeEllipse(state)
+      }
+
+      event.preventDefault()
+      return
+    }
+
+    if (
+      polylineState.current &&
+      polylineState.current.pointerId === event.pointerId &&
+      containerRef.current?.hasPointerCapture(event.pointerId)
+    ) {
+      const state = polylineState.current
+      polylineState.current = null
+      containerRef.current.releasePointerCapture(event.pointerId)
+
+      if (
+        state.points.length <= 1 ||
+        (state.points.length === 2 &&
+          Math.hypot(state.points[1].x - state.points[0].x, state.points[1].y - state.points[0].y) < 2)
+      ) {
+        cancelPolyline(state)
+      } else {
+        finalizePolyline(state)
       }
 
       event.preventDefault()
