@@ -39,6 +39,11 @@ import {
   type TransformSnapshot,
 } from './controllers/transform-controller'
 import {
+  buildSnapOptions,
+  calculateRotationSnap,
+  type ScaleMovingEdges,
+} from '../services/snap'
+import {
   createWorldMarquee,
   getShapesWithinBounds,
   hitTestShapes,
@@ -85,11 +90,32 @@ import { updateTextShapeBounds } from '../utils/text-measure'
 const PAN_COMMIT_DELAY = 120
 const MIN_SCALE_SIZE = 4
 const ROTATE_SNAP_STEP_RADIANS = Math.PI / 12
+const SNAP_GRID_SIZE = 5
+const SNAP_PIXEL_TOLERANCE = 8
 
 const snapRotationAngle = (angle: number, shouldSnap: boolean) =>
   shouldSnap
     ? Math.round(angle / ROTATE_SNAP_STEP_RADIANS) * ROTATE_SNAP_STEP_RADIANS
     : angle
+
+const createMovingEdges = (handle: HandlePosition) => ({
+  minX:
+    handle === 'left' ||
+    handle === 'top-left' ||
+    handle === 'bottom-left',
+  maxX:
+    handle === 'right' ||
+    handle === 'top-right' ||
+    handle === 'bottom-right',
+  minY:
+    handle === 'top' ||
+    handle === 'top-left' ||
+    handle === 'top-right',
+  maxY:
+    handle === 'bottom' ||
+    handle === 'bottom-left' ||
+    handle === 'bottom-right',
+})
 
 type MoveTransformState = {
   mode: 'move'
@@ -756,16 +782,23 @@ export const CanvasViewport = () => {
           x: event.clientX - rect.left,
           y: event.clientY - rect.top,
         }
-        const worldPoint = screenPointToWorld(
-          screenPoint,
-          useAppStore.getState().viewport,
-        )
+        const storeState = useAppStore.getState()
+        const worldPoint = screenPointToWorld(screenPoint, storeState.viewport)
+        const snapConfig = buildSnapOptions({
+          enabled: settings.snapEnabled,
+          gridSize: SNAP_GRID_SIZE,
+          tolerance: SNAP_PIXEL_TOLERANCE,
+          viewportScale: storeState.viewport.scale,
+          shapes: storeState.document.shapes,
+          selectionIds,
+        })
 
         if (transform.mode === 'move') {
-          applyTranslation(transform.snapshot, {
+          const delta = {
             x: worldPoint.x - transform.startWorld.x,
             y: worldPoint.y - transform.startWorld.y,
-          })
+          }
+          applyTranslation(transform.snapshot, delta, { snap: snapConfig })
         } else if (transform.mode === 'scale') {
           const newBounds = computeScaledBounds(
             transform.handle,
@@ -773,16 +806,31 @@ export const CanvasViewport = () => {
             worldPoint,
             event.shiftKey,
           )
-          applyScale(transform.snapshot, newBounds)
+          const movingEdges: ScaleMovingEdges = createMovingEdges(transform.handle)
+          applyScale(transform.snapshot, newBounds, {
+            snap: { config: snapConfig, moving: movingEdges },
+          })
         } else if (transform.mode === 'rotate') {
           const rawAngle =
             Math.atan2(
               worldPoint.y - transform.center.y,
               worldPoint.x - transform.center.x,
             ) - transform.startAngle
-          const snapped = snapRotationAngle(rawAngle, event.shiftKey)
-          transform.currentAngle = snapped
-          applyRotation(transform.snapshot, snapped, transform.center)
+          let angle = rawAngle
+          if (event.shiftKey) {
+            angle = snapRotationAngle(rawAngle, true)
+          }
+          const rotationSnapConfig = {
+            ...snapConfig,
+            angleStep: ROTATE_SNAP_STEP_RADIANS,
+            angleTolerance: ROTATE_SNAP_STEP_RADIANS / 2,
+          }
+          const resolvedAngle =
+            rotationSnapConfig.enabled
+              ? calculateRotationSnap(angle, rotationSnapConfig)
+              : angle
+          transform.currentAngle = resolvedAngle
+          applyRotation(transform.snapshot, resolvedAngle, transform.center)
         }
       }
 
@@ -958,6 +1006,14 @@ export const CanvasViewport = () => {
     ) {
       const node = containerRef.current
       const store = useAppStore.getState()
+      const snapConfig = buildSnapOptions({
+        enabled: settings.snapEnabled,
+        gridSize: SNAP_GRID_SIZE,
+        tolerance: SNAP_PIXEL_TOLERANCE,
+        viewportScale: store.viewport.scale,
+        shapes: store.document.shapes,
+        selectionIds,
+      })
 
       if (node) {
         const rect = node.getBoundingClientRect()
@@ -968,10 +1024,11 @@ export const CanvasViewport = () => {
         const worldPoint = screenPointToWorld(screenPoint, store.viewport)
 
         if (transform.mode === 'move') {
-          applyTranslation(transform.snapshot, {
+          const delta = {
             x: worldPoint.x - transform.startWorld.x,
             y: worldPoint.y - transform.startWorld.y,
-          })
+          }
+          applyTranslation(transform.snapshot, delta, { snap: snapConfig })
           store.commit('Move selection')
         } else if (transform.mode === 'scale') {
           const newBounds = computeScaledBounds(
@@ -980,7 +1037,10 @@ export const CanvasViewport = () => {
             worldPoint,
             event.shiftKey,
           )
-          applyScale(transform.snapshot, newBounds)
+          const movingEdges: ScaleMovingEdges = createMovingEdges(transform.handle)
+          applyScale(transform.snapshot, newBounds, {
+            snap: { config: snapConfig, moving: movingEdges },
+          })
           store.commit('Resize selection')
         } else {
           const rawAngle =
@@ -988,11 +1048,18 @@ export const CanvasViewport = () => {
               worldPoint.y - transform.center.y,
               worldPoint.x - transform.center.x,
             ) - transform.startAngle
+          const rotationSnapConfig = {
+            ...snapConfig,
+            angleStep: ROTATE_SNAP_STEP_RADIANS,
+            angleTolerance: ROTATE_SNAP_STEP_RADIANS / 2,
+          }
           let finalAngle = rawAngle
           if (event.shiftKey) {
             finalAngle = snapRotationAngle(rawAngle, true)
-          } else {
+          } else if (transform.currentAngle !== undefined) {
             finalAngle = transform.currentAngle
+          } else if (rotationSnapConfig.enabled) {
+            finalAngle = calculateRotationSnap(rawAngle, rotationSnapConfig)
           }
           transform.currentAngle = finalAngle
           applyRotation(transform.snapshot, finalAngle, transform.center)
@@ -1352,6 +1419,15 @@ export const CanvasViewport = () => {
           aria-label={settings.gridVisible ? 'Hide grid' : 'Show grid'}
         >
           {settings.gridVisible ? 'Hide grid' : 'Show grid'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
+          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          aria-pressed={settings.snapEnabled}
+          aria-label={settings.snapEnabled ? 'Disable snapping' : 'Enable snapping'}
+        >
+          {settings.snapEnabled ? 'Snap on' : 'Snap off'}
         </button>
       </div>
     </div>

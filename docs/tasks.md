@@ -104,7 +104,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-select-08
   - Estimate: 90
 
-- [ ] T-context-15: ContextPanel properties binding (75m)
+- [x] T-context-15: ContextPanel properties binding (75m)
   - Goal: Property inspector reflects selection and updates styles live.
   - Files/paths: `src/ui/ContextPanel.tsx`, `src/state/store.ts`
   - Key edits: Bind stroke/fill/strokeWidth, text props; immediate application.
@@ -125,7 +125,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-text-16
   - Estimate: 75
 
-- [ ] T-snap-18: Snap to grid/edges/centers/angles (90m)
+- [x] T-snap-18: Snap to grid/edges/centers/angles (90m)
   - Goal: Snap candidates computed and applied during drag/resize/rotate.
   - Files/paths: `src/services/snap.ts`, `src/canvas/controllers/TransformController.ts`
   - Key edits: Grid/object/angle snaps; toggleable in settings; behind feature flag by default.

@@ -1,5 +1,13 @@
 import { useAppStore } from '../../state/store'
 import { getShapeBounds, type ShapeBounds } from '../../services/geometry'
+import {
+  calculateRotationSnap,
+  calculateScaleSnap,
+  calculateTranslationSnap,
+  type RotationSnapOptions,
+  type ScaleMovingEdges,
+  type SnapCalculationOptions,
+} from '../../services/snap'
 import type {
   Shape,
   Vec2,
@@ -78,13 +86,21 @@ export const restoreSnapshot = (snapshot: TransformSnapshot) => {
   })
 }
 
-export const applyTranslation = (snapshot: TransformSnapshot, delta: Vec2) => {
+export const applyTranslation = (
+  snapshot: TransformSnapshot,
+  delta: Vec2,
+  options?: { snap?: SnapCalculationOptions },
+) => {
   const store = useAppStore.getState()
+  const resolvedDelta =
+    options?.snap && options.snap.enabled
+      ? calculateTranslationSnap(snapshot.selectionBounds, delta, options.snap)
+      : delta
   snapshot.shapes.forEach(({ id, original }) => {
     const clone = cloneShape(original)
     clone.position = {
-      x: clone.position.x + delta.x,
-      y: clone.position.y + delta.y,
+      x: clone.position.x + resolvedDelta.x,
+      y: clone.position.y + resolvedDelta.y,
     }
     store.updateShape(id, (shape) => {
       Object.assign(shape, clone)
@@ -176,13 +192,18 @@ const scaleWorldPoint = (
 export const applyScale = (
   snapshot: TransformSnapshot,
   newBounds: ShapeBounds,
+  options?: { snap?: { config: SnapCalculationOptions; moving: ScaleMovingEdges } },
 ) => {
   const store = useAppStore.getState()
   const { selectionBounds } = snapshot
+  const resolvedBounds =
+    options?.snap && options.snap.config.enabled
+      ? calculateScaleSnap(newBounds, options.snap.moving, options.snap.config)
+      : newBounds
 
   snapshot.shapes.forEach(({ id, original, bounds }) => {
     const clone = cloneShape(original)
-    const scaledBounds = scaleBoundsOfShape(bounds, selectionBounds, newBounds)
+    const scaledBounds = scaleBoundsOfShape(bounds, selectionBounds, resolvedBounds)
 
     switch (original.type) {
       case 'rect': {
@@ -295,9 +316,14 @@ export const applyRotation = (
   snapshot: TransformSnapshot,
   angle: number,
   center: Vec2,
+  options?: { snap?: RotationSnapOptions },
 ) => {
   const store = useAppStore.getState()
-  const deltaDegrees = (angle * 180) / Math.PI
+  const resolvedAngle =
+    options?.snap && options.snap.enabled
+      ? calculateRotationSnap(angle, options.snap)
+      : angle
+  const deltaDegrees = (resolvedAngle * 180) / Math.PI
 
   snapshot.shapes.forEach(({ id, original }) => {
     const clone = cloneShape(original)
@@ -320,7 +346,7 @@ export const applyRotation = (
           y: originalLine.position.y + point.y,
         }))
         const rotatedPoints = originalWorldPoints.map((point) =>
-          rotatePoint(point, center, angle),
+          rotatePoint(point, center, resolvedAngle),
         )
         line.position = { ...rotatedPoints[0] }
         line.points = rotatedPoints.map((point) => ({
@@ -337,7 +363,7 @@ export const applyRotation = (
           y: originalPath.position.y + point.y,
         }))
         const rotatedPoints = originalWorldPoints.map((point) =>
-          rotatePoint(point, center, angle),
+          rotatePoint(point, center, resolvedAngle),
         )
         path.position = { ...rotatedPoints[0] }
         path.d = rotatedPoints.map((point) => ({
