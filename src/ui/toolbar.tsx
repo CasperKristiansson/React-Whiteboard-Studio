@@ -46,6 +46,7 @@ const ToolbarButton = ({
   icon: Icon,
   active,
   onSelect,
+  fullWidth = false,
 }: {
   value: Tool
   label: string
@@ -53,12 +54,14 @@ const ToolbarButton = ({
   icon: IconType
   active: boolean
   onSelect: (tool: Tool) => void
+  fullWidth?: boolean
 }) => {
   return (
     <button
       type="button"
       className={clsx(
         'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+        fullWidth && 'w-full justify-start',
         active
           ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
           : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
@@ -90,7 +93,9 @@ const getSharedValue = <T,>(
   return first
 }
 
-const Toolbar = () => {
+type ToolbarVariant = 'default' | 'dropdown'
+
+const Toolbar = ({ variant = 'default' }: { variant?: ToolbarVariant }) => {
   const activeTool = useAppSelector(selectActiveTool)
   const selectionIds = useAppSelector(selectSelection)
   const shapes = useAppSelector(selectShapes)
@@ -245,24 +250,39 @@ const Toolbar = () => {
   const underlineMixed = sharedUnderline === undefined
   const alignValue = sharedAlign ?? 'left'
 
+  const containerClassName =
+    variant === 'dropdown'
+      ? 'pointer-events-auto w-full rounded-xl border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/90 p-3 shadow-sm backdrop-blur'
+      : 'pointer-events-auto flex w-full max-w-3xl flex-wrap items-center justify-center gap-2 rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg) px-4 py-3 shadow backdrop-blur'
+
+  const toolsWrapperClassName =
+    variant === 'dropdown'
+      ? 'grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-3'
+      : 'flex w-full flex-wrap items-center justify-center gap-2'
+
+  const textControlsClassName = clsx(
+    'mt-3 w-full border-t border-(--color-elevated-border)/70 pt-3',
+    variant === 'dropdown' ? 'lg:col-span-3' : undefined,
+  )
+
   return (
-    <nav
-      className="pointer-events-auto flex w-full max-w-3xl flex-wrap items-center justify-center gap-2 rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg) px-4 py-3 shadow backdrop-blur"
-      aria-label="Drawing tools"
-    >
-      {TOOL_OPTIONS.map((tool) => (
-        <ToolbarButton
-          key={tool.value}
-          value={tool.value}
-          label={tool.label}
-          shortcut={tool.shortcut}
-          icon={tool.icon}
-          active={tool.value === activeTool}
-          onSelect={setTool}
-        />
-      ))}
+    <nav className={containerClassName} aria-label="Drawing tools">
+      <div className={toolsWrapperClassName}>
+        {TOOL_OPTIONS.map((tool) => (
+          <ToolbarButton
+            key={tool.value}
+            value={tool.value}
+            label={tool.label}
+            shortcut={tool.shortcut}
+            icon={tool.icon}
+            active={tool.value === activeTool}
+            onSelect={setTool}
+            fullWidth={variant === 'dropdown'}
+          />
+        ))}
+      </div>
       {showTextControls ? (
-        <div className="mt-3 w-full border-t border-(--color-elevated-border)/70 pt-3">
+        <div className={textControlsClassName}>
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1">
               <span className="text-xs font-medium text-(--color-muted-foreground)">

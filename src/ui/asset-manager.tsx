@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import clsx from 'clsx'
 
 import { useAppSelector, useAppStore, selectProjectId, selectViewport } from '../state/store'
 import { listProjectAssets, importImageAsset, getAssetUrl, revokeAssetUrl } from '../services/assets'
@@ -28,7 +29,9 @@ const scaleDimensions = (width: number, height: number) => {
   return { width: Math.round(width * ratio), height: Math.round(height * ratio) }
 }
 
-const AssetManager = () => {
+type AssetManagerVariant = 'default' | 'dropdown'
+
+const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }) => {
   const projectId = useAppSelector(selectProjectId)
   const viewport = useAppSelector(selectViewport)
   const addShape = useAppStore((state) => state.addShape)
@@ -168,9 +171,42 @@ const AssetManager = () => {
     [assets],
   )
 
+  const containerClassName =
+    variant === 'dropdown'
+      ? 'space-y-3 rounded-2xl border border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/85 p-3 shadow-sm backdrop-blur'
+      : 'rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow'
+
+  const headerClassName = clsx(
+    'flex flex-wrap items-center justify-between gap-2',
+    variant === 'default' && 'mb-3',
+  )
+
+  const importButtonClassName = clsx(
+    'flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+    variant === 'dropdown' && 'w-full justify-center sm:w-auto',
+  )
+
+  const assetsWrapperClassName =
+    variant === 'dropdown' ? 'max-h-[50vh] overflow-y-auto pr-1' : undefined
+
+  const assetsGridClassName = clsx(
+    'grid gap-3',
+    variant === 'dropdown' ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3',
+  )
+
+  const assetCardClassName = clsx(
+    'overflow-hidden rounded-lg border border-(--color-elevated-border) bg-(--color-elevated-bg) shadow-sm',
+    variant === 'dropdown' && 'border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/90',
+  )
+
+  const insertButtonClassName = clsx(
+    'flex items-center justify-center gap-1 rounded border border-(--color-button-border) bg-(--color-button-bg) px-2 py-1 text-xs font-medium text-(--color-button-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+    variant === 'dropdown' && 'w-full',
+  )
+
   return (
-    <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow"> 
-      <header className="mb-3 flex items-center justify-between">
+    <section className={containerClassName}>
+      <header className={headerClassName}>
         <div>
           <h2 className="flex items-center gap-2 text-base font-semibold text-(--color-app-foreground)">
             <LuLayers className="h-4 w-4" /> Assets
@@ -180,7 +216,7 @@ const AssetManager = () => {
         <button
           type="button"
           onClick={handleUploadClick}
-          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          className={importButtonClassName}
           disabled={!projectId || isUploading}
         >
           <LuUpload className="h-4 w-4" />
@@ -203,29 +239,31 @@ const AssetManager = () => {
           No assets yet. Import images to reuse them on the canvas.
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sortedAssets.map((asset) => (
-            <li key={asset.id} className="overflow-hidden rounded-lg border border-(--color-elevated-border) bg-(--color-elevated-bg) shadow-sm">
-              <div className="aspect-video bg-(--color-muted)">
-                <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
-              </div>
-              <div className="flex flex-col gap-2 px-3 py-2">
-                <div>
-                  <p className="truncate text-xs font-semibold text-(--color-app-foreground)">{asset.name}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-(--color-muted-foreground)">{asset.mime}</p>
+        <div className={assetsWrapperClassName}>
+          <ul className={assetsGridClassName}>
+            {sortedAssets.map((asset) => (
+              <li key={asset.id} className={assetCardClassName}>
+                <div className="aspect-video bg-(--color-muted)">
+                  <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
                 </div>
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-1 rounded border border-(--color-button-border) bg-(--color-button-bg) px-2 py-1 text-xs font-medium text-(--color-button-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-                  onClick={() => handleInsert(asset)}
-                >
-                  <LuMoveRight className="h-4 w-4" />
-                  Insert
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className="flex flex-col gap-2 px-3 py-2">
+                  <div>
+                    <p className="truncate text-xs font-semibold text-(--color-app-foreground)">{asset.name}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-(--color-muted-foreground)">{asset.mime}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={insertButtonClassName}
+                    onClick={() => handleInsert(asset)}
+                  >
+                    <LuMoveRight className="h-4 w-4" />
+                    Insert
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
     </section>
