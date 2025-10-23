@@ -1,5 +1,6 @@
 import { putAsset, getAsset, listAssetsForProject } from '../persistence/adapter'
 import type { AssetRow } from '../persistence/db'
+import { AppError } from '../errors'
 
 const SUPPORTED_IMAGE_MIME = new Set([
   'image/png',
@@ -33,7 +34,7 @@ export const importImageAsset = async (
   file: File,
 ): Promise<{ id: string; width: number; height: number }> => {
   if (!isSupportedImage(file)) {
-    throw new Error('Unsupported image type')
+    throw new AppError('ValidationError', 'Unsupported image type')
   }
 
   const meta = await loadImageMetadata(file)
@@ -43,18 +44,22 @@ export const importImageAsset = async (
       ? crypto.randomUUID()
       : `asset-${Math.random().toString(36).slice(2)}-${Date.now()}`
 
-  await putAsset({
-    id: assetId,
-    projectId,
-    kind: 'image',
-    mime: file.type,
-    blob: file,
-    meta: {
-      width: meta.width,
-      height: meta.height,
-      name: file.name,
-    },
-  })
+  try {
+    await putAsset({
+      id: assetId,
+      projectId,
+      kind: 'image',
+      mime: file.type,
+      blob: file,
+      meta: {
+        width: meta.width,
+        height: meta.height,
+        name: file.name,
+      },
+    })
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to store imported asset', error)
+  }
 
   return { id: assetId, width: meta.width, height: meta.height }
 }

@@ -9,6 +9,8 @@ import {
   selectSelection,
   useAppSelector,
 } from '../state/store'
+import { useErrorStore } from '../state/error'
+import { toAppError } from '../errors'
 
 const sanitizeFileName = (name: string) =>
   name.trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]+/gi, '').toLowerCase() || 'document'
@@ -26,6 +28,7 @@ const ExportDialog = () => {
   const [isExportingSvg, setExportingSvg] = useState(false)
   const [svgMessage, setSvgMessage] = useState<string | null>(null)
   const [svgError, setSvgError] = useState<string | null>(null)
+  const pushError = useErrorStore((state) => state.push)
 
   const fileName = useMemo(
     () => `${sanitizeFileName(currentDocument.name)}.wb.json`,
@@ -54,12 +57,13 @@ const ExportDialog = () => {
       URL.revokeObjectURL(url)
       setJsonMessage('Export ready')
     } catch (err) {
-      console.error('Export failed', err)
-      setJsonError('Failed to export. Please try again.')
+      const appError = toAppError(err, 'ExportError', 'Failed to export project')
+      pushError(appError)
+      setJsonError(appError.message)
     } finally {
       setExportingJson(false)
     }
-  }, [currentDocument, fileName, projectId])
+  }, [currentDocument, fileName, projectId, pushError])
 
   const handlePngExport = useCallback(
     async (target: 'document' | 'selection') => {
@@ -89,13 +93,14 @@ const ExportDialog = () => {
         URL.revokeObjectURL(url)
         setPngMessage('PNG exported')
       } catch (err) {
-        console.error('PNG export failed', err)
-        setPngError('Failed to export PNG. Please try again.')
+        const appError = toAppError(err, 'ExportError', 'Failed to export PNG')
+        pushError(appError)
+        setPngError(appError.message)
       } finally {
         setExportingPng(false)
       }
     },
-    [currentDocument, fileName, selection],
+    [currentDocument, fileName, pushError, selection],
   )
 
   const handleSvgExport = useCallback(
@@ -126,13 +131,14 @@ const ExportDialog = () => {
         URL.revokeObjectURL(url)
         setSvgMessage('SVG exported')
       } catch (err) {
-        console.error('SVG export failed', err)
-        setSvgError('Failed to export SVG. Please try again.')
+        const appError = toAppError(err, 'ExportError', 'Failed to export SVG')
+        pushError(appError)
+        setSvgError(appError.message)
       } finally {
         setExportingSvg(false)
       }
     },
-    [currentDocument, fileName, selection],
+    [currentDocument, fileName, pushError, selection],
   )
 
   return (

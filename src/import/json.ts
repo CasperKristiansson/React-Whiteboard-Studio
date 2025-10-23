@@ -1,6 +1,7 @@
 import type { DocumentV1 } from '../types'
 import { deserializeDocument } from '../persistence/db'
 import { putAsset } from '../persistence/adapter'
+import { AppError } from '../errors'
 
 type ImportAsset = {
   id: string
@@ -36,25 +37,28 @@ const parseBundle = async (file: File): Promise<ImportBundleV1> => {
 }
 
 export const importProjectFromJson = async (projectId: string, file: File) => {
-  const bundle = await parseBundle(file)
-  const document = deserializeDocument(JSON.stringify(bundle.document))
+  try {
+    const bundle = await parseBundle(file)
+    const document = deserializeDocument(JSON.stringify(bundle.document))
 
-  if (Array.isArray(bundle.assets)) {
-    await Promise.all(
-      bundle.assets.map(async (asset) => {
-        const blob = await dataUrlToBlob(asset.dataUrl)
-        await putAsset({
-          id: asset.id,
-          projectId,
-          kind: asset.kind,
-          mime: asset.mime,
-          blob,
-          meta: asset.meta,
-        })
-      }),
-    )
+    if (Array.isArray(bundle.assets)) {
+      await Promise.all(
+        bundle.assets.map(async (asset) => {
+          const blob = await dataUrlToBlob(asset.dataUrl)
+          await putAsset({
+            id: asset.id,
+            projectId,
+            kind: asset.kind,
+            mime: asset.mime,
+            blob,
+            meta: asset.meta,
+          })
+        }),
+      )
+    }
+
+    return document
+  } catch (error) {
+    throw new AppError('ImportError', 'Failed to import project file', error)
   }
-
-  return document
 }
-

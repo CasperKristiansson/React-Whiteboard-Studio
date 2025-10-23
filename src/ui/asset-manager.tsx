@@ -4,6 +4,8 @@ import { useAppSelector, useAppStore, selectProjectId, selectViewport } from '..
 import { listProjectAssets, importImageAsset, getAssetUrl, revokeAssetUrl } from '../services/assets'
 import { createShapeId } from '../state/store'
 import { DEFAULT_STROKE } from '../types/shapes'
+import { useErrorStore } from '../state/error'
+import { toAppError } from '../errors'
 
 type AssetPreview = {
   id: string
@@ -36,6 +38,7 @@ const AssetManager = () => {
   const [isUploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const pushError = useErrorStore((state) => state.push)
 
   useEffect(() => {
     if (!projectId) {
@@ -47,26 +50,30 @@ const AssetManager = () => {
     const loadedIds: string[] = []
 
     const load = async () => {
-      const rows = await listProjectAssets(projectId)
-      if (cancelled) return
-      const previews: AssetPreview[] = []
-      for (const row of rows) {
-        const url = await getAssetUrl(row.id)
-        if (!url) continue
-        loadedIds.push(row.id)
-        const meta = (row.meta ?? {}) as { width?: number; height?: number; name?: string }
-        previews.push({
-          id: row.id,
-          name: meta?.name ?? 'Untitled asset',
-          mime: row.mime,
-          url,
-          width: meta?.width ?? 200,
-          height: meta?.height ?? 200,
-          createdAt: row.createdAt,
-        })
-      }
-      if (!cancelled) {
-        setAssets(previews.sort((a, b) => b.createdAt - a.createdAt))
+      try {
+        const rows = await listProjectAssets(projectId)
+        if (cancelled) return
+        const previews: AssetPreview[] = []
+        for (const row of rows) {
+          const url = await getAssetUrl(row.id)
+          if (!url) continue
+          loadedIds.push(row.id)
+          const meta = (row.meta ?? {}) as { width?: number; height?: number; name?: string }
+          previews.push({
+            id: row.id,
+            name: meta?.name ?? 'Untitled asset',
+            mime: row.mime,
+            url,
+            width: meta?.width ?? 200,
+            height: meta?.height ?? 200,
+            createdAt: row.createdAt,
+          })
+        }
+        if (!cancelled) {
+          setAssets(previews.sort((a, b) => b.createdAt - a.createdAt))
+        }
+      } catch (err) {
+        pushError(toAppError(err, 'PersistenceError', 'Failed to load assets'))
       }
     }
 
@@ -76,7 +83,7 @@ const AssetManager = () => {
       cancelled = true
       loadedIds.forEach((id) => revokeAssetUrl(id))
     }
-  }, [projectId])
+  }, [projectId, pushError])
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click()
@@ -110,8 +117,9 @@ const AssetManager = () => {
               return [next, ...previous]
             })
           } catch (fileError) {
-            console.error('Unable to import asset', fileError)
-            setError('Failed to import one or more files.')
+            const appError = toAppError(fileError, 'AssetError', 'Failed to import asset')
+            pushError(appError)
+            setError(appError.message)
           }
         }
       } finally {
@@ -121,7 +129,7 @@ const AssetManager = () => {
         }
       }
     },
-    [projectId],
+    [projectId, pushError],
   )
 
   const handleInsert = useCallback(

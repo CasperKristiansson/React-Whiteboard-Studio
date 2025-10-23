@@ -9,6 +9,8 @@ import {
   loadDocument,
   type ProjectMeta,
 } from '../persistence/adapter'
+import { toAppError } from '../errors'
+import { useErrorStore } from './error'
 import { useAppStore } from './store'
 
 export const useProjects = () => {
@@ -16,6 +18,7 @@ export const useProjects = () => {
   const setProjectId = useAppStore((state) => state.setProjectId)
   const markClean = useAppStore((state) => state.markClean)
   const dirty = useAppStore((state) => state.dirty)
+  const pushError = useErrorStore((state) => state.push)
 
   const [projects, setProjects] = useState<ProjectMeta[]>([])
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
@@ -38,67 +41,89 @@ export const useProjects = () => {
       setCurrentProjectId(id)
     } catch (err) {
       console.error('Failed to load project', err)
-      setError('Could not load project')
+      const appError = toAppError(err, 'PersistenceError', 'Could not load project')
+      pushError(appError)
+      setError(appError.message)
     } finally {
       setLoading(false)
     }
-  }, [dirty, markClean, replaceDocument, setProjectId])
+  }, [dirty, markClean, pushError, replaceDocument, setProjectId])
 
   useEffect(() => {
     const init = async () => {
-      const list = await listProjects()
-      if (!list.length) {
-        const project = await createProject('Untitled')
-        setProjects([project])
-        await selectProject(project.id)
-      } else {
-        setProjects(list)
-        await selectProject(list[0].id)
+      try {
+        const list = await listProjects()
+        if (!list.length) {
+          const project = await createProject('Untitled')
+          setProjects([project])
+          await selectProject(project.id)
+        } else {
+          setProjects(list)
+          await selectProject(list[0].id)
+        }
+      } catch (error) {
+        pushError(toAppError(error, 'PersistenceError', 'Unable to load projects'))
       }
     }
     void init()
-  }, [selectProject])
+  }, [pushError, selectProject])
 
   const create = useCallback(
     async (name: string) => {
-      const project = await createProject(name)
-      setProjects((prev) => [project, ...prev])
-      await selectProject(project.id)
+      try {
+        const project = await createProject(name)
+        setProjects((prev) => [project, ...prev])
+        await selectProject(project.id)
+      } catch (error) {
+        pushError(toAppError(error, 'PersistenceError', 'Failed to create project'))
+      }
     },
-    [selectProject],
+    [pushError, selectProject],
   )
 
   const rename = useCallback(async (id: string, name: string) => {
-    await renameProject(id, name)
-    setProjects((prev) =>
-      prev.map((project) => (project.id === id ? { ...project, name } : project)),
-    )
-  }, [])
+    try {
+      await renameProject(id, name)
+      setProjects((prev) =>
+        prev.map((project) => (project.id === id ? { ...project, name } : project)),
+      )
+    } catch (error) {
+      pushError(toAppError(error, 'PersistenceError', 'Failed to rename project'))
+    }
+  }, [pushError])
 
   const duplicate = useCallback(async (id: string) => {
-    const project = await duplicateProject(id)
-    setProjects((prev) => [project, ...prev])
-  }, [])
+    try {
+      const project = await duplicateProject(id)
+      setProjects((prev) => [project, ...prev])
+    } catch (error) {
+      pushError(toAppError(error, 'PersistenceError', 'Failed to duplicate project'))
+    }
+  }, [pushError])
 
   const remove = useCallback(
     async (id: string) => {
-      await deleteProject(id)
-      let nextProjectId: string | null = null
-      setProjects((prev) => {
-        const nextList = prev.filter((project) => project.id !== id)
-        if (currentProjectId === id && nextList.length) {
-          nextProjectId = nextList[0].id
+      try {
+        await deleteProject(id)
+        let nextProjectId: string | null = null
+        setProjects((prev) => {
+          const nextList = prev.filter((project) => project.id !== id)
+          if (currentProjectId === id && nextList.length) {
+            nextProjectId = nextList[0].id
+          }
+          return nextList
+        })
+        if (nextProjectId) {
+          await selectProject(nextProjectId)
+        } else if (currentProjectId === id) {
+          setCurrentProjectId(null)
+          setProjectId(null)
         }
-        return nextList
-      })
-      if (nextProjectId) {
-        await selectProject(nextProjectId)
-      } else if (currentProjectId === id) {
-        setCurrentProjectId(null)
-        setProjectId(null)
+      } catch (error) {
+        pushError(toAppError(error, 'PersistenceError', 'Failed to delete project'))
       }
     },
-    [currentProjectId, selectProject, setProjectId],
+    [currentProjectId, pushError, selectProject, setProjectId],
   )
 
   return {

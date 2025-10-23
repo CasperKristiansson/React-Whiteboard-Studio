@@ -10,6 +10,7 @@ import ExportDialog from './ui/export-dialog'
 import ImportDialog from './ui/import-dialog'
 import ProjectManager from './ui/project-manager'
 import DebugOverlay from './dev/debug-overlay'
+import ErrorToasts from './ui/error-toasts'
 import {
   selectActiveTool,
   selectTheme,
@@ -133,6 +134,7 @@ function App() {
       </div>
       </main>
       <DebugOverlay enabled={debugEnabled} />
+      <ErrorToasts />
     </>
   )
 }

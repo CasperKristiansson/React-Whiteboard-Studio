@@ -1,5 +1,6 @@
 import { DEFAULT_TRANSFORM, DOCUMENT_VERSION, type DocumentV1 } from '../types'
 import { db, deserializeDocument, serializeDocument, type AssetRow, type ProjectRow } from './db'
+import { AppError } from '../errors'
 
 export type ProjectMeta = {
   id: string
@@ -30,8 +31,12 @@ const toMeta = ({ id, name, createdAt, updatedAt }: ProjectRow): ProjectMeta => 
 })
 
 export const listProjects = async (): Promise<ProjectMeta[]> => {
-  const rows = await db.projects.orderBy('updatedAt').reverse().toArray()
-  return rows.map(toMeta)
+  try {
+    const rows = await db.projects.orderBy('updatedAt').reverse().toArray()
+    return rows.map(toMeta)
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to list projects', error)
+  }
 }
 
 export const createProject = async (name: string): Promise<ProjectMeta> => {
@@ -44,29 +49,41 @@ export const createProject = async (name: string): Promise<ProjectMeta> => {
     updatedAt: now,
   }
   const doc = createDefaultDocument(name)
-  await db.transaction('rw', db.projects, db.documents, async () => {
-    await db.projects.add(meta)
-    await db.documents.put({
-      projectId,
-      version: DOCUMENT_VERSION,
-      updatedAt: now,
-      payload: serializeDocument(doc),
+  try {
+    await db.transaction('rw', db.projects, db.documents, async () => {
+      await db.projects.add(meta)
+      await db.documents.put({
+        projectId,
+        version: DOCUMENT_VERSION,
+        updatedAt: now,
+        payload: serializeDocument(doc),
+      })
     })
-  })
-  return toMeta(meta)
+    return toMeta(meta)
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to create project', error)
+  }
 }
 
 export const renameProject = async (projectId: string, name: string): Promise<void> => {
   const now = Date.now()
-  await db.projects.update(projectId, { name, updatedAt: now })
+  try {
+    await db.projects.update(projectId, { name, updatedAt: now })
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to rename project', error)
+  }
 }
 
 export const deleteProject = async (projectId: string): Promise<void> => {
-  await db.transaction('rw', db.projects, db.documents, db.assets, async () => {
-    await db.projects.delete(projectId)
-    await db.documents.delete(projectId)
-    await db.assets.where('projectId').equals(projectId).delete()
-  })
+  try {
+    await db.transaction('rw', db.projects, db.documents, db.assets, async () => {
+      await db.projects.delete(projectId)
+      await db.documents.delete(projectId)
+      await db.assets.where('projectId').equals(projectId).delete()
+    })
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to delete project', error)
+  }
 }
 
 export const duplicateProject = async (projectId: string): Promise<ProjectMeta> => {
@@ -90,50 +107,62 @@ export const duplicateProject = async (projectId: string): Promise<ProjectMeta> 
     updatedAt: now,
   }
 
-  await db.transaction('rw', db.projects, db.documents, db.assets, async () => {
-    await db.projects.add(meta)
-    await db.documents.put({
-      projectId: newProjectId,
-      version: sourceDocument.version,
-      updatedAt: now,
-      payload: sourceDocument.payload,
+  try {
+    await db.transaction('rw', db.projects, db.documents, db.assets, async () => {
+      await db.projects.add(meta)
+      await db.documents.put({
+        projectId: newProjectId,
+        version: sourceDocument.version,
+        updatedAt: now,
+        payload: sourceDocument.payload,
+      })
+
+      const assetRows = await db.assets.where('projectId').equals(projectId).toArray()
+      await Promise.all(
+        assetRows.map((asset) =>
+          db.assets.add({
+            ...asset,
+            id: createId(),
+            projectId: newProjectId,
+            createdAt: now,
+            updatedAt: now,
+          }),
+        ),
+      )
     })
 
-    const assetRows = await db.assets.where('projectId').equals(projectId).toArray()
-    await Promise.all(
-      assetRows.map((asset) =>
-        db.assets.add({
-          ...asset,
-          id: createId(),
-          projectId: newProjectId,
-          createdAt: now,
-          updatedAt: now,
-        }),
-      ),
-    )
-  })
-
-  return toMeta(meta)
+    return toMeta(meta)
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to duplicate project', error)
+  }
 }
 
 export const loadDocument = async (projectId: string): Promise<DocumentV1 | null> => {
-  const row = await db.documents.get(projectId)
-  if (!row) return null
-  return deserializeDocument(row.payload)
+  try {
+    const row = await db.documents.get(projectId)
+    if (!row) return null
+    return deserializeDocument(row.payload)
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to load document', error)
+  }
 }
 
 export const saveDocument = async (projectId: string, document: DocumentV1): Promise<void> => {
   const now = Date.now()
   const payload = serializeDocument(document)
-  await db.transaction('rw', db.projects, db.documents, async () => {
-    await db.projects.update(projectId, { updatedAt: now })
-    await db.documents.put({
-      projectId,
-      version: document.version ?? DOCUMENT_VERSION,
-      updatedAt: now,
-      payload,
+  try {
+    await db.transaction('rw', db.projects, db.documents, async () => {
+      await db.projects.update(projectId, { updatedAt: now })
+      await db.documents.put({
+        projectId,
+        version: document.version ?? DOCUMENT_VERSION,
+        updatedAt: now,
+        payload,
+      })
     })
-  })
+  } catch (error) {
+    throw new AppError('PersistenceError', 'Failed to save document', error)
+  }
 }
 
 export const putAsset = async (asset: {

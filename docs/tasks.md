@@ -209,7 +209,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-viewport-03, T-select-08
   - Estimate: 60
 
-- [ ] T-error-30: Error taxonomy and user-friendly messages (45m)
+- [x] T-error-30: Error taxonomy and user-friendly messages (45m)
   - Goal: AppError codes, try/catch wrappers for persistence/import/export; toasts/dialogs.
   - Files/paths: `src/errors.ts`, `src/ui/ErrorBoundary.tsx`, `src/ui/Toasts.tsx`
   - Key edits: AppError class, error boundaries, surface actionable guidance.

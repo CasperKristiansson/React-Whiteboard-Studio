@@ -1,5 +1,6 @@
 import { serializeDocument } from '../persistence/db'
 import { listAssetsForProject } from '../persistence/adapter'
+import { AppError } from '../errors'
 import type { DocumentV1 } from '../types'
 
 type ExportAsset = {
@@ -34,37 +35,41 @@ export const exportProjectToJson = async (
   projectId: string,
   document: DocumentV1,
 ): Promise<Blob> => {
-  const assets = await listAssetsForProject(projectId)
-  const referencedAssetIds = new Set(
-    document.shapes
-      .filter((shape) => shape.type === 'image')
-      .map((shape) => shape.assetId)
-      .filter(Boolean) as string[],
-  )
+  try {
+    const assets = await listAssetsForProject(projectId)
+    const referencedAssetIds = new Set(
+      document.shapes
+        .filter((shape) => shape.type === 'image')
+        .map((shape) => shape.assetId)
+        .filter(Boolean) as string[],
+    )
 
-  const serializedAssets: ExportAsset[] = []
-  for (const asset of assets) {
-    if (asset.kind === 'image' && referencedAssetIds.size && !referencedAssetIds.has(asset.id)) {
-      continue
+    const serializedAssets: ExportAsset[] = []
+    for (const asset of assets) {
+      if (asset.kind === 'image' && referencedAssetIds.size && !referencedAssetIds.has(asset.id)) {
+        continue
+      }
+      const dataUrl = await blobToDataUrl(asset.blob)
+      serializedAssets.push({
+        id: asset.id,
+        kind: asset.kind,
+        mime: asset.mime,
+        dataUrl,
+        meta: asset.meta,
+        createdAt: asset.createdAt,
+        updatedAt: asset.updatedAt,
+      })
     }
-    const dataUrl = await blobToDataUrl(asset.blob)
-    serializedAssets.push({
-      id: asset.id,
-      kind: asset.kind,
-      mime: asset.mime,
-      dataUrl,
-      meta: asset.meta,
-      createdAt: asset.createdAt,
-      updatedAt: asset.updatedAt,
-    })
-  }
 
-  const bundle: ExportBundleV1 = {
-    version: 1,
-    document: JSON.parse(serializeDocument(document)) as DocumentV1,
-    assets: serializedAssets,
-  }
+    const bundle: ExportBundleV1 = {
+      version: 1,
+      document: JSON.parse(serializeDocument(document)) as DocumentV1,
+      assets: serializedAssets,
+    }
 
-  const json = JSON.stringify(bundle, null, 2)
-  return new Blob([json], { type: 'application/json' })
+    const json = JSON.stringify(bundle, null, 2)
+    return new Blob([json], { type: 'application/json' })
+  } catch (error) {
+    throw new AppError('ExportError', 'Failed to prepare JSON export', error)
+  }
 }

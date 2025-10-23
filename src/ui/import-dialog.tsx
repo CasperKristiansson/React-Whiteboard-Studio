@@ -6,12 +6,15 @@ import {
   useAppSelector,
   useAppStore,
 } from '../state/store'
+import { useErrorStore } from '../state/error'
+import { toAppError } from '../errors'
 
 const ImportDialog = () => {
   const projectId = useAppSelector(selectProjectId)
   const replaceDocument = useAppStore((state) => state.replaceDocument)
   const markClean = useAppStore((state) => state.markClean)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const pushError = useErrorStore((state) => state.push)
 
   const [isImporting, setImporting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -41,8 +44,9 @@ const ImportDialog = () => {
         markClean()
         setMessage('Import successful')
       } catch (err) {
-        console.error('Import failed', err)
-        setError('Failed to import file. Make sure it was exported from this app.')
+        const appError = toAppError(err, 'ImportError', 'Failed to import file. Make sure it was exported from this app.')
+        pushError(appError)
+        setError(appError.message)
       } finally {
         setImporting(false)
         if (fileInputRef.current) {
@@ -50,7 +54,7 @@ const ImportDialog = () => {
         }
       }
     },
-    [markClean, projectId, replaceDocument],
+    [markClean, projectId, pushError, replaceDocument],
   )
 
   return (
@@ -88,4 +92,3 @@ const ImportDialog = () => {
 }
 
 export default ImportDialog
-

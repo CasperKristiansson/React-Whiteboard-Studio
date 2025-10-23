@@ -8,6 +8,8 @@ import {
   saveDocument,
   type ProjectMeta,
 } from '../persistence/adapter'
+import { toAppError } from '../errors'
+import { useErrorStore } from './error'
 
 const AUTOSAVE_DELAY_MS = 500
 
@@ -15,6 +17,7 @@ export const usePersistence = () => {
   const replaceDocument = useAppStore((state) => state.replaceDocument)
   const setProjectId = useAppStore((state) => state.setProjectId)
   const markClean = useAppStore((state) => state.markClean)
+  const pushError = useErrorStore((state) => state.push)
 
   const projectRef = useRef<ProjectMeta | null>(null)
   const timerRef = useRef<number | null>(null)
@@ -22,15 +25,19 @@ export const usePersistence = () => {
 
   useEffect(() => {
     const initialise = async () => {
-      const projects = await listProjects()
-      const selected = projects[0] ?? (await createProject('Untitled'))
-      projectRef.current = selected
-      setProjectId(selected.id)
-      const doc = await loadDocument(selected.id)
-      if (doc) {
-        replaceDocument(doc)
-      } else {
-        markClean()
+      try {
+        const projects = await listProjects()
+        const selected = projects[0] ?? (await createProject('Untitled'))
+        projectRef.current = selected
+        setProjectId(selected.id)
+        const doc = await loadDocument(selected.id)
+        if (doc) {
+          replaceDocument(doc)
+        } else {
+          markClean()
+        }
+      } catch (error) {
+        pushError(toAppError(error, 'PersistenceError', 'Unable to load projects'))
       }
     }
 
@@ -56,7 +63,7 @@ export const usePersistence = () => {
           await saveDocument(projectRef.current.id, document)
           markClean()
         } catch (error) {
-          console.error('Autosave failed', error)
+          pushError(toAppError(error, 'PersistenceError', 'Autosave failed'))
         } finally {
           isSavingRef.current = false
         }
@@ -69,7 +76,7 @@ export const usePersistence = () => {
       }
       unsubscribe()
     }
-  }, [markClean, replaceDocument, setProjectId])
+  }, [markClean, pushError, replaceDocument, setProjectId])
 
   return null
 }
