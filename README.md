@@ -2,7 +2,7 @@
 
 # React Whiteboard Studio
 
-A polished whiteboard experience built to showcase modern front-end engineering craft. Draw blends a high-touch canvas interaction model with a thoughtful state architecture, local persistence, and a curated design system.
+A polished whiteboard experience. Draw blends a high-touch canvas interaction model with a thoughtful state architecture, local persistence, and a curated design system.
 
 ## Highlights
 
