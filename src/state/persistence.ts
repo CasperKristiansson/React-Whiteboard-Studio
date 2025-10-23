@@ -29,7 +29,7 @@ export const usePersistence = () => {
         const projects = await listProjects()
         const selected = projects[0] ?? (await createProject('Untitled'))
         projectRef.current = selected
-        setProjectId(selected.id)
+        setProjectId(selected.id, selected.name)
         const doc = await loadDocument(selected.id)
         if (doc) {
           replaceDocument(doc)

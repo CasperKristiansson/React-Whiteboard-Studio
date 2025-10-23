@@ -10,14 +10,17 @@ import DebugOverlay from './dev/debug-overlay'
 import ErrorToasts from './ui/error-toasts'
 import {
   selectActiveTool,
+  selectSettings,
   selectTheme,
   useAppSelector,
   useAppStore,
 } from './state/store'
 import type { ThemePreference } from './types'
+import type { UiSettings } from './state/store'
 import { usePersistence } from './state/persistence'
 
 const THEME_STORAGE_KEY = 'draw.theme'
+const SETTINGS_STORAGE_KEY = 'draw.settings'
 
 const isThemePreference = (value: string | null): value is ThemePreference =>
   value === 'light' || value === 'dark' || value === 'system'
@@ -26,7 +29,10 @@ function App() {
   const theme = useAppSelector(selectTheme)
   const activeTool = useAppSelector(selectActiveTool)
   const setTheme = useAppStore((state) => state.setTheme)
+  const settings = useAppSelector(selectSettings)
+  const setSettings = useAppStore((state) => state.setSettings)
   const hasSyncedTheme = useRef(false)
+  const hasSyncedSettings = useRef(false)
 
   useKeyboardShortcuts()
   usePersistence()
@@ -45,9 +51,41 @@ function App() {
   }, [setTheme])
 
   useEffect(() => {
+    if (typeof window === 'undefined' || hasSyncedSettings.current) return
+    const stored = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Partial<UiSettings>
+        const next: Partial<UiSettings> = {}
+        if (typeof parsed.gridVisible === 'boolean') {
+          next.gridVisible = parsed.gridVisible
+        }
+        if (typeof parsed.snapEnabled === 'boolean') {
+          next.snapEnabled = parsed.snapEnabled
+        }
+        if (Object.keys(next).length > 0) {
+          setSettings(next)
+        }
+      } catch {
+        // ignore malformed persisted settings
+      }
+    }
+    hasSyncedSettings.current = true
+  }, [setSettings])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(THEME_STORAGE_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hasSyncedSettings.current) return
+    const payload = JSON.stringify({
+      gridVisible: settings.gridVisible,
+      snapEnabled: settings.snapEnabled,
+    })
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, payload)
+  }, [settings.gridVisible, settings.snapEnabled])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

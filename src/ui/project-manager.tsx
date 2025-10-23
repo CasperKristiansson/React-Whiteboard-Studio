@@ -41,7 +41,7 @@ const ProjectManager = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this project and its assets?')) return
     await remove(id)
-    setStatus('Project deleted')
+    setStatus(null)
   }
 
   return (
@@ -89,7 +89,7 @@ const ProjectManager = () => {
             >
               <button
                 type="button"
-                onClick={() => selectProject(project.id)}
+                onClick={() => selectProject(project.id, project)}
                 className={`flex-1 text-left font-medium ${isActive ? 'text-(--color-accent)' : ''}`}
               >
                 {project.name}

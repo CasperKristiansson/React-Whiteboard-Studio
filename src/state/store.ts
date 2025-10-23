@@ -44,6 +44,8 @@ export type UiSettings = {
 export type AppState = {
   /** Current project identifier */
   projectId: UUID | null
+  /** Current project name */
+  projectName: string | null
   /** Currently loaded document */
   document: DocumentV1
   /** Currently selected shape ids */
@@ -63,7 +65,7 @@ export type AppState = {
 }
 
 export type AppActions = {
-  setProjectId: (projectId: UUID | null) => void
+  setProjectId: (projectId: UUID | null, projectName?: string | null) => void
   setTool: (tool: Tool) => void
   setViewport: (update: Partial<Transform>) => void
   setSettings: (update: Partial<UiSettings>) => void
@@ -128,6 +130,7 @@ const initialDocument = createInitialDocument()
 
 const initialState: AppState = {
   projectId: null,
+  projectName: null,
   document: initialDocument,
   selection: [],
   activeTool: 'select',
@@ -197,9 +200,12 @@ export const useAppStore = create<AppStore>()(
   immer((set) => ({
     ...initialState,
 
-    setProjectId: (projectId) => {
+    setProjectId: (projectId, projectName) => {
       set((state) => {
         state.projectId = projectId
+        if (projectName !== undefined) {
+          state.projectName = projectName
+        }
       })
     },
 
@@ -616,6 +622,7 @@ export const selectSettings = (state: AppStore) => state.settings
 export const selectTheme = (state: AppStore) => state.theme
 export const selectDirty = (state: AppStore) => state.dirty
 export const selectProjectId = (state: AppStore) => state.projectId
+export const selectProjectName = (state: AppStore) => state.projectName
 export const selectCanUndo = (state: AppStore) =>
   state.history.pending !== null || state.history.past.length > 0
 export const selectCanRedo = (state: AppStore) =>

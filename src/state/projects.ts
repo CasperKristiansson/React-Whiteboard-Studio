@@ -26,7 +26,7 @@ export const useProjects = () => {
   const [error, setError] = useState<string | null>(null)
 
   const selectProject = useCallback(
-    async (id: string) => {
+    async (id: string, meta?: ProjectMeta) => {
       setLoading(true)
       setError(null)
       try {
@@ -38,7 +38,8 @@ export const useProjects = () => {
           replaceDocument(doc)
           markClean()
         }
-        setProjectId(id)
+        const projectName = meta?.name ?? projects.find((project) => project.id === id)?.name ?? null
+        setProjectId(id, projectName)
         setCurrentProjectId(id)
       } catch (err) {
         console.error('Failed to load project', err)
@@ -53,7 +54,7 @@ export const useProjects = () => {
         setLoading(false)
       }
     },
-    [dirty, markClean, pushError, replaceDocument, setProjectId],
+    [dirty, markClean, projects, pushError, replaceDocument, setProjectId],
   )
 
   useEffect(() => {
@@ -63,10 +64,10 @@ export const useProjects = () => {
         if (!list.length) {
           const project = await createProject('Untitled')
           setProjects([project])
-          await selectProject(project.id)
+          await selectProject(project.id, project)
         } else {
           setProjects(list)
-          await selectProject(list[0].id)
+          await selectProject(list[0].id, list[0])
         }
       } catch (error) {
         pushError(
@@ -82,7 +83,7 @@ export const useProjects = () => {
       try {
         const project = await createProject(name)
         setProjects((prev) => [project, ...prev])
-        await selectProject(project.id)
+        await selectProject(project.id, project)
       } catch (error) {
         pushError(
           toAppError(error, 'PersistenceError', 'Failed to create project'),
@@ -101,13 +102,16 @@ export const useProjects = () => {
             project.id === id ? { ...project, name } : project,
           ),
         )
+        if (currentProjectId === id) {
+          setProjectId(id, name)
+        }
       } catch (error) {
         pushError(
           toAppError(error, 'PersistenceError', 'Failed to rename project'),
         )
       }
     },
-    [pushError],
+    [currentProjectId, pushError, setProjectId],
   )
 
   const duplicate = useCallback(
@@ -128,19 +132,17 @@ export const useProjects = () => {
     async (id: string) => {
       try {
         await deleteProject(id)
-        let nextProjectId: string | null = null
-        setProjects((prev) => {
-          const nextList = prev.filter((project) => project.id !== id)
-          if (currentProjectId === id && nextList.length) {
-            nextProjectId = nextList[0].id
-          }
-          return nextList
-        })
-        if (nextProjectId) {
-          await selectProject(nextProjectId)
-        } else if (currentProjectId === id) {
+        const nextList = projects.filter((project) => project.id !== id)
+        setProjects(nextList)
+
+        if (currentProjectId === id) {
           setCurrentProjectId(null)
-          setProjectId(null)
+          const nextMeta = nextList[0]
+          if (nextMeta) {
+            await selectProject(nextMeta.id, nextMeta)
+            return
+          }
+          setProjectId(null, null)
         }
       } catch (error) {
         pushError(
@@ -148,7 +150,7 @@ export const useProjects = () => {
         )
       }
     },
-    [currentProjectId, pushError, selectProject, setProjectId],
+    [currentProjectId, projects, pushError, selectProject, setProjectId],
   )
 
   return {

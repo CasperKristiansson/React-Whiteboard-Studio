@@ -6,6 +6,7 @@ import { exportDocumentToSVG } from '../export/svg'
 import {
   selectDocument,
   selectProjectId,
+  selectProjectName,
   selectSelection,
   useAppSelector,
 } from '../state/store'
@@ -28,6 +29,7 @@ const sanitizeFileName = (name: string) =>
 
 const ExportDialog = () => {
   const projectId = useAppSelector(selectProjectId)
+  const projectName = useAppSelector(selectProjectName)
   const currentDocument = useAppSelector(selectDocument)
   const selection = useAppSelector(selectSelection)
   const [isExportingJson, setExportingJson] = useState(false)
@@ -41,10 +43,10 @@ const ExportDialog = () => {
   const [svgError, setSvgError] = useState<string | null>(null)
   const pushError = useErrorStore((state) => state.push)
 
-  const fileName = useMemo(
-    () => `${sanitizeFileName(currentDocument.name)}.wb.json`,
-    [currentDocument.name],
-  )
+  const fileName = useMemo(() => {
+    const base = sanitizeFileName(projectName ?? currentDocument.name)
+    return `${base}.wb.json`
+  }, [currentDocument.name, projectName])
 
   const handleJsonExport = useCallback(async () => {
     if (!projectId) {
@@ -170,7 +172,7 @@ const ExportDialog = () => {
             assets.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid gap-2">
           <button
             type="button"
             onClick={handleJsonExport}

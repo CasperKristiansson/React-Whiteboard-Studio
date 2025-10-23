@@ -141,7 +141,8 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
 
   const handleProjectClick = useCallback(
     async (projectId: string) => {
-      await selectProject(projectId)
+      const meta = projects.find((project) => project.id === projectId)
+      await selectProject(projectId, meta)
       setOpenProjectId((current) => (current === projectId ? null : projectId))
       setStatus(null)
       setRenameProjectId(null)
@@ -149,7 +150,7 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
       setDeleteProjectId(null)
       setDeleteProjectName('')
     },
-    [selectProject],
+    [projects, selectProject],
   )
 
   const handleRenameStart = useCallback(
@@ -221,7 +222,7 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteProjectId) return
     await remove(deleteProjectId)
-    setStatus('Project deleted')
+    setStatus(null)
     setDeleteProjectId(null)
     setDeleteProjectName('')
     setOpenProjectId(null)
