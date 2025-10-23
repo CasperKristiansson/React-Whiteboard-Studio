@@ -1,4 +1,8 @@
-import { putAsset, getAsset, listAssetsForProject } from '../persistence/adapter'
+import {
+  putAsset,
+  getAsset,
+  listAssetsForProject,
+} from '../persistence/adapter'
 import type { AssetRow } from '../persistence/db'
 import { AppError } from '../errors'
 
@@ -12,7 +16,9 @@ const SUPPORTED_IMAGE_MIME = new Set([
 
 const urlCache = new Map<string, string>()
 
-const loadImageMetadata = (blob: Blob): Promise<{ width: number; height: number }> =>
+const loadImageMetadata = (
+  blob: Blob,
+): Promise<{ width: number; height: number }> =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob)
     const image = new Image()
@@ -27,7 +33,8 @@ const loadImageMetadata = (blob: Blob): Promise<{ width: number; height: number 
     image.src = url
   })
 
-export const isSupportedImage = (file: File) => SUPPORTED_IMAGE_MIME.has(file.type)
+export const isSupportedImage = (file: File) =>
+  SUPPORTED_IMAGE_MIME.has(file.type)
 
 export const importImageAsset = async (
   projectId: string,
@@ -58,7 +65,11 @@ export const importImageAsset = async (
       },
     })
   } catch (error) {
-    throw new AppError('PersistenceError', 'Failed to store imported asset', error)
+    throw new AppError(
+      'PersistenceError',
+      'Failed to store imported asset',
+      error,
+    )
   }
 
   return { id: assetId, width: meta.width, height: meta.height }

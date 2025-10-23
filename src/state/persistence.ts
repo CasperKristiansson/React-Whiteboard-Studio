@@ -37,7 +37,9 @@ export const usePersistence = () => {
           markClean()
         }
       } catch (error) {
-        pushError(toAppError(error, 'PersistenceError', 'Unable to load projects'))
+        pushError(
+          toAppError(error, 'PersistenceError', 'Unable to load projects'),
+        )
       }
     }
 

@@ -46,7 +46,11 @@ export const exportProjectToJson = async (
 
     const serializedAssets: ExportAsset[] = []
     for (const asset of assets) {
-      if (asset.kind === 'image' && referencedAssetIds.size && !referencedAssetIds.has(asset.id)) {
+      if (
+        asset.kind === 'image' &&
+        referencedAssetIds.size &&
+        !referencedAssetIds.has(asset.id)
+      ) {
         continue
       }
       const dataUrl = await blobToDataUrl(asset.blob)

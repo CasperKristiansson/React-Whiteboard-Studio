@@ -1,11 +1,7 @@
 import { useCallback, useState, useRef, type ChangeEvent } from 'react'
 
 import { importProjectFromJson } from '../import/json'
-import {
-  selectProjectId,
-  useAppSelector,
-  useAppStore,
-} from '../state/store'
+import { selectProjectId, useAppSelector, useAppStore } from '../state/store'
 import { useErrorStore } from '../state/error'
 import { toAppError } from '../errors'
 import { LuUpload } from 'react-icons/lu'
@@ -45,7 +41,11 @@ const ImportDialog = () => {
         markClean()
         setMessage('Import successful')
       } catch (err) {
-        const appError = toAppError(err, 'ImportError', 'Failed to import file. Make sure it was exported from this app.')
+        const appError = toAppError(
+          err,
+          'ImportError',
+          'Failed to import file. Make sure it was exported from this app.',
+        )
         pushError(appError)
         setError(appError.message)
       } finally {
@@ -62,7 +62,9 @@ const ImportDialog = () => {
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
       <header className="mb-4 space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-(--color-app-foreground)">Import</h2>
+          <h2 className="text-base font-semibold text-(--color-app-foreground)">
+            Import
+          </h2>
           <p className="text-xs text-(--color-muted-foreground)">
             Restore a project from a `.wb.json` export.
           </p>
@@ -85,9 +87,7 @@ const ImportDialog = () => {
         />
       </header>
 
-      {message ? (
-        <p className="text-xs text-green-500">{message}</p>
-      ) : null}
+      {message ? <p className="text-xs text-green-500">{message}</p> : null}
       {error ? <p className="text-xs text-red-500">{error}</p> : null}
     </section>
   )

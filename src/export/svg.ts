@@ -55,8 +55,12 @@ const rectToSvg = (shape: RectShape, offset: Vec2) => {
     `width="${shape.size.x}"`,
     `height="${shape.size.y}"`,
     shape.fill ? `fill="${toCssColor(shape.fill)}"` : 'fill="none"',
-    shape.strokeWidth > 0 ? `stroke="${toCssColor(shape.stroke)}" stroke-width="${shape.strokeWidth}"` : 'stroke="none"',
-    shape.rotation ? `transform="rotate(${shape.rotation}, ${x + shape.size.x / 2}, ${y + shape.size.y / 2})"` : '',
+    shape.strokeWidth > 0
+      ? `stroke="${toCssColor(shape.stroke)}" stroke-width="${shape.strokeWidth}"`
+      : 'stroke="none"',
+    shape.rotation
+      ? `transform="rotate(${shape.rotation}, ${x + shape.size.x / 2}, ${y + shape.size.y / 2})"`
+      : '',
   ]
   return `<rect ${attrs.filter(Boolean).join(' ')} />`
 }
@@ -70,7 +74,9 @@ const ellipseToSvg = (shape: EllipseShape, offset: Vec2) => {
     `rx="${shape.rx}"`,
     `ry="${shape.ry}"`,
     shape.fill ? `fill="${toCssColor(shape.fill)}"` : 'fill="none"',
-    shape.strokeWidth > 0 ? `stroke="${toCssColor(shape.stroke)}" stroke-width="${shape.strokeWidth}"` : 'stroke="none"',
+    shape.strokeWidth > 0
+      ? `stroke="${toCssColor(shape.stroke)}" stroke-width="${shape.strokeWidth}"`
+      : 'stroke="none"',
     shape.rotation ? `transform="rotate(${shape.rotation}, ${cx}, ${cy})"` : '',
   ]
   return `<ellipse ${attrs.filter(Boolean).join(' ')} />`
@@ -89,15 +95,16 @@ const polylineToSvg = (shape: LineShape | ArrowShape, offset: Vec2) => {
     `stroke="${toCssColor(shape.stroke)}"`,
     `stroke-width="${shape.strokeWidth}"`,
     `transform="translate(${shape.position.x - offset.x}, ${shape.position.y - offset.y})"`,
-    shape.type === 'arrow'
-      ? 'marker-end="url(#arrowhead)"'
-      : '',
+    shape.type === 'arrow' ? 'marker-end="url(#arrowhead)"' : '',
   ]
   return `<path ${attrs.filter(Boolean).join(' ')} />`
 }
 
 const pathToSvg = (shape: PathShape, offset: Vec2) => {
-  const start = { x: shape.position.x - offset.x, y: shape.position.y - offset.y }
+  const start = {
+    x: shape.position.x - offset.x,
+    y: shape.position.y - offset.y,
+  }
   const commands = [`M ${start.x} ${start.y}`]
   shape.d.slice(1).forEach((point) => {
     commands.push(`L ${start.x + point.x} ${start.y + point.y}`)
@@ -123,7 +130,9 @@ const textToSvg = (shape: TextShape, offset: Vec2) => {
     `font-size="${shape.font.size}"`,
     shape.italic ? 'font-style="italic"' : '',
     shape.underline ? 'text-decoration="underline"' : '',
-    shape.align ? `text-anchor="${shape.align === 'center' ? 'middle' : shape.align === 'right' ? 'end' : 'start'}"` : '',
+    shape.align
+      ? `text-anchor="${shape.align === 'center' ? 'middle' : shape.align === 'right' ? 'end' : 'start'}"`
+      : '',
     shape.rotation ? `transform="rotate(${shape.rotation}, ${x}, ${y})"` : '',
   ]
   return `<text ${attrs.filter(Boolean).join(' ')}>${escapeXml(shape.text ?? '')}</text>`
@@ -174,7 +183,9 @@ export const exportDocumentToSVG = async (
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
   )
-  parts.push('<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="currentColor" /></marker></defs>')
+  parts.push(
+    '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="currentColor" /></marker></defs>',
+  )
 
   const imageElements: string[] = []
   for (const shape of shapes.sort((a, b) => a.zIndex - b.zIndex)) {
@@ -211,4 +222,3 @@ export const exportDocumentToSVG = async (
   const svg = parts.join('')
   return new Blob([svg], { type: 'image/svg+xml' })
 }
-

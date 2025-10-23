@@ -18,7 +18,11 @@ export class AppError extends Error {
   }
 }
 
-export const toAppError = (error: unknown, fallback: AppErrorCode, message: string) => {
+export const toAppError = (
+  error: unknown,
+  fallback: AppErrorCode,
+  message: string,
+) => {
   if (error instanceof AppError) return error
   return new AppError(fallback, message, error)
 }

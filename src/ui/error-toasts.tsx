@@ -19,14 +19,14 @@ const ErrorToasts = () => {
   if (!errors.length) return null
 
   return (
-    <div className="pointer-events-none fixed bottom-6 right-6 flex w-72 flex-col gap-2">
+    <div className="pointer-events-none fixed right-6 bottom-6 flex w-72 flex-col gap-2">
       {errors.map((error) => (
         <div
           key={error.id}
           className="pointer-events-auto rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-xs text-red-200 shadow-lg backdrop-blur"
         >
           <div className="flex items-center justify-between">
-            <strong className="uppercase tracking-wide">{error.code}</strong>
+            <strong className="tracking-wide uppercase">{error.code}</strong>
             <button
               type="button"
               className="text-red-200/80 hover:text-red-100"
@@ -43,4 +43,3 @@ const ErrorToasts = () => {
 }
 
 export default ErrorToasts
-

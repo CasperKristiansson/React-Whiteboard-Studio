@@ -48,7 +48,9 @@ const ProjectManager = () => {
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
       <header className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-(--color-app-foreground)">Projects</h2>
+          <h2 className="text-base font-semibold text-(--color-app-foreground)">
+            Projects
+          </h2>
           <p className="text-xs text-(--color-muted-foreground)">
             Switch between projects or manage their lifecycle.
           </p>
@@ -71,7 +73,9 @@ const ProjectManager = () => {
         </button>
       </form>
 
-      {loading ? <p className="text-xs text-(--color-muted-foreground)">Loading…</p> : null}
+      {loading ? (
+        <p className="text-xs text-(--color-muted-foreground)">Loading…</p>
+      ) : null}
       {error ? <p className="text-xs text-red-500">{error}</p> : null}
       {status ? <p className="text-xs text-green-500">{status}</p> : null}
 
@@ -122,4 +126,3 @@ const ProjectManager = () => {
 }
 
 export default ProjectManager
-

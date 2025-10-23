@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { IconContext } from 'react-icons'
 
 import CanvasViewport from './canvas/canvas-viewport'
@@ -8,7 +8,12 @@ import ThemeToggle from './components/theme-toggle'
 import TitleBadge from './components/title-badge'
 import DebugOverlay from './dev/debug-overlay'
 import ErrorToasts from './ui/error-toasts'
-import { selectActiveTool, selectTheme, useAppSelector, useAppStore } from './state/store'
+import {
+  selectActiveTool,
+  selectTheme,
+  useAppSelector,
+  useAppStore,
+} from './state/store'
 import type { ThemePreference } from './types'
 import { usePersistence } from './state/persistence'
 
@@ -21,20 +26,23 @@ function App() {
   const theme = useAppSelector(selectTheme)
   const activeTool = useAppSelector(selectActiveTool)
   const setTheme = useAppStore((state) => state.setTheme)
+  const hasSyncedTheme = useRef(false)
 
   useKeyboardShortcuts()
   usePersistence()
 
   const debugEnabled =
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('debug')
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || hasSyncedTheme.current) return
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
-    if (isThemePreference(stored) && stored !== theme) {
+    if (isThemePreference(stored)) {
       setTheme(stored)
     }
-  }, [setTheme, theme])
+    hasSyncedTheme.current = true
+  }, [setTheme])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -75,19 +83,21 @@ function App() {
   }, [theme])
 
   return (
-    <IconContext.Provider value={{ size: '18', className: 'align-middle inline-block' }}>
+    <IconContext.Provider
+      value={{ size: '18', className: 'align-middle inline-block' }}
+    >
       <>
         <main className="relative h-screen w-screen overflow-hidden bg-(--color-app-bg) text-(--color-app-foreground) transition-colors">
           <div className="absolute inset-0">
             <CanvasViewport />
           </div>
           <TopNavigation />
-          <div className="pointer-events-none absolute left-4 top-[10px] z-40">
+          <div className="pointer-events-none absolute top-[10px] left-4 z-40">
             <div className="pointer-events-auto">
               <TitleBadge activeTool={activeTool} />
             </div>
           </div>
-          <div className="pointer-events-none absolute right-4 top-[10px] z-40">
+          <div className="pointer-events-none absolute top-[10px] right-4 z-40">
             <div className="pointer-events-auto">
               <ThemeToggle />
             </div>

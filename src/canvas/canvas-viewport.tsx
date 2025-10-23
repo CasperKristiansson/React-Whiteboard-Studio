@@ -1387,7 +1387,7 @@ export const CanvasViewport = () => {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full w-full select-none overflow-hidden bg-(--color-canvas-bg) transition-colors"
+      className="relative flex h-full w-full overflow-hidden bg-(--color-canvas-bg) transition-colors select-none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -1430,7 +1430,6 @@ export const CanvasViewport = () => {
         </div>
         <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
       </div>
-
     </div>
   )
 }

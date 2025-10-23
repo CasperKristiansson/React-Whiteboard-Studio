@@ -38,8 +38,9 @@ export const useErrorStore = create<ErrorStore>((set) => ({
     }))
   },
   dismiss: (id) => {
-    set((state) => ({ errors: state.errors.filter((error) => error.id !== id) }))
+    set((state) => ({
+      errors: state.errors.filter((error) => error.id !== id),
+    }))
   },
   clear: () => set({ errors: [] }),
 }))
-

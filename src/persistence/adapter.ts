@@ -1,5 +1,11 @@
 import { DEFAULT_TRANSFORM, DOCUMENT_VERSION, type DocumentV1 } from '../types'
-import { db, deserializeDocument, serializeDocument, type AssetRow, type ProjectRow } from './db'
+import {
+  db,
+  deserializeDocument,
+  serializeDocument,
+  type AssetRow,
+  type ProjectRow,
+} from './db'
 import { AppError } from '../errors'
 
 export type ProjectMeta = {
@@ -23,7 +29,12 @@ const createDefaultDocument = (name: string): DocumentV1 => ({
   version: DOCUMENT_VERSION,
 })
 
-const toMeta = ({ id, name, createdAt, updatedAt }: ProjectRow): ProjectMeta => ({
+const toMeta = ({
+  id,
+  name,
+  createdAt,
+  updatedAt,
+}: ProjectRow): ProjectMeta => ({
   id,
   name,
   createdAt,
@@ -65,7 +76,10 @@ export const createProject = async (name: string): Promise<ProjectMeta> => {
   }
 }
 
-export const renameProject = async (projectId: string, name: string): Promise<void> => {
+export const renameProject = async (
+  projectId: string,
+  name: string,
+): Promise<void> => {
   const now = Date.now()
   try {
     await db.projects.update(projectId, { name, updatedAt: now })
@@ -76,17 +90,25 @@ export const renameProject = async (projectId: string, name: string): Promise<vo
 
 export const deleteProject = async (projectId: string): Promise<void> => {
   try {
-    await db.transaction('rw', db.projects, db.documents, db.assets, async () => {
-      await db.projects.delete(projectId)
-      await db.documents.delete(projectId)
-      await db.assets.where('projectId').equals(projectId).delete()
-    })
+    await db.transaction(
+      'rw',
+      db.projects,
+      db.documents,
+      db.assets,
+      async () => {
+        await db.projects.delete(projectId)
+        await db.documents.delete(projectId)
+        await db.assets.where('projectId').equals(projectId).delete()
+      },
+    )
   } catch (error) {
     throw new AppError('PersistenceError', 'Failed to delete project', error)
   }
 }
 
-export const duplicateProject = async (projectId: string): Promise<ProjectMeta> => {
+export const duplicateProject = async (
+  projectId: string,
+): Promise<ProjectMeta> => {
   const sourceProject = await db.projects.get(projectId)
   if (!sourceProject) {
     throw new Error('Project not found')
@@ -108,28 +130,37 @@ export const duplicateProject = async (projectId: string): Promise<ProjectMeta> 
   }
 
   try {
-    await db.transaction('rw', db.projects, db.documents, db.assets, async () => {
-      await db.projects.add(meta)
-      await db.documents.put({
-        projectId: newProjectId,
-        version: sourceDocument.version,
-        updatedAt: now,
-        payload: sourceDocument.payload,
-      })
+    await db.transaction(
+      'rw',
+      db.projects,
+      db.documents,
+      db.assets,
+      async () => {
+        await db.projects.add(meta)
+        await db.documents.put({
+          projectId: newProjectId,
+          version: sourceDocument.version,
+          updatedAt: now,
+          payload: sourceDocument.payload,
+        })
 
-      const assetRows = await db.assets.where('projectId').equals(projectId).toArray()
-      await Promise.all(
-        assetRows.map((asset) =>
-          db.assets.add({
-            ...asset,
-            id: createId(),
-            projectId: newProjectId,
-            createdAt: now,
-            updatedAt: now,
-          }),
-        ),
-      )
-    })
+        const assetRows = await db.assets
+          .where('projectId')
+          .equals(projectId)
+          .toArray()
+        await Promise.all(
+          assetRows.map((asset) =>
+            db.assets.add({
+              ...asset,
+              id: createId(),
+              projectId: newProjectId,
+              createdAt: now,
+              updatedAt: now,
+            }),
+          ),
+        )
+      },
+    )
 
     return toMeta(meta)
   } catch (error) {
@@ -137,7 +168,9 @@ export const duplicateProject = async (projectId: string): Promise<ProjectMeta> 
   }
 }
 
-export const loadDocument = async (projectId: string): Promise<DocumentV1 | null> => {
+export const loadDocument = async (
+  projectId: string,
+): Promise<DocumentV1 | null> => {
   try {
     const row = await db.documents.get(projectId)
     if (!row) return null
@@ -147,7 +180,10 @@ export const loadDocument = async (projectId: string): Promise<DocumentV1 | null
   }
 }
 
-export const saveDocument = async (projectId: string, document: DocumentV1): Promise<void> => {
+export const saveDocument = async (
+  projectId: string,
+  document: DocumentV1,
+): Promise<void> => {
   const now = Date.now()
   const payload = serializeDocument(document)
   try {
@@ -193,5 +229,7 @@ export const removeAsset = async (id: string): Promise<void> => {
   await db.assets.delete(id)
 }
 
-export const listAssetsForProject = async (projectId: string): Promise<AssetRow[]> =>
+export const listAssetsForProject = async (
+  projectId: string,
+): Promise<AssetRow[]> =>
   db.assets.where('projectId').equals(projectId).toArray()

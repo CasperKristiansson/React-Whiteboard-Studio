@@ -1,8 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from 'react'
 import clsx from 'clsx'
 
-import { useAppSelector, useAppStore, selectProjectId, selectViewport } from '../state/store'
-import { listProjectAssets, importImageAsset, getAssetUrl, revokeAssetUrl } from '../services/assets'
+import {
+  useAppSelector,
+  useAppStore,
+  selectProjectId,
+  selectViewport,
+} from '../state/store'
+import {
+  listProjectAssets,
+  importImageAsset,
+  getAssetUrl,
+  revokeAssetUrl,
+} from '../services/assets'
 import { createShapeId } from '../state/store'
 import { DEFAULT_STROKE } from '../types/shapes'
 import { useErrorStore } from '../state/error'
@@ -25,13 +42,23 @@ const scaleDimensions = (width: number, height: number) => {
   if (width <= MAX_SHAPE_DIMENSION && height <= MAX_SHAPE_DIMENSION) {
     return { width, height }
   }
-  const ratio = Math.min(MAX_SHAPE_DIMENSION / width, MAX_SHAPE_DIMENSION / height)
-  return { width: Math.round(width * ratio), height: Math.round(height * ratio) }
+  const ratio = Math.min(
+    MAX_SHAPE_DIMENSION / width,
+    MAX_SHAPE_DIMENSION / height,
+  )
+  return {
+    width: Math.round(width * ratio),
+    height: Math.round(height * ratio),
+  }
 }
 
 type AssetManagerVariant = 'default' | 'dropdown'
 
-const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }) => {
+const AssetManager = ({
+  variant = 'default',
+}: {
+  variant?: AssetManagerVariant
+}) => {
   const projectId = useAppSelector(selectProjectId)
   const viewport = useAppSelector(selectViewport)
   const addShape = useAppStore((state) => state.addShape)
@@ -62,7 +89,11 @@ const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }
           const url = await getAssetUrl(row.id)
           if (!url) continue
           loadedIds.push(row.id)
-          const meta = (row.meta ?? {}) as { width?: number; height?: number; name?: string }
+          const meta = (row.meta ?? {}) as {
+            width?: number
+            height?: number
+            name?: string
+          }
           previews.push({
             id: row.id,
             name: meta?.name ?? 'Untitled asset',
@@ -121,7 +152,11 @@ const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }
               return [next, ...previous]
             })
           } catch (fileError) {
-            const appError = toAppError(fileError, 'AssetError', 'Failed to import asset')
+            const appError = toAppError(
+              fileError,
+              'AssetError',
+              'Failed to import asset',
+            )
             pushError(appError)
             setError(appError.message)
           }
@@ -196,7 +231,8 @@ const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }
 
   const assetCardClassName = clsx(
     'overflow-hidden rounded-lg border border-(--color-elevated-border) bg-(--color-elevated-bg) shadow-sm',
-    variant === 'dropdown' && 'border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/90',
+    variant === 'dropdown' &&
+      'border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/90',
   )
 
   const insertButtonClassName = clsx(
@@ -211,7 +247,9 @@ const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }
           <h2 className="flex items-center gap-2 text-base font-semibold text-(--color-app-foreground)">
             <LuLayers className="h-4 w-4" /> Assets
           </h2>
-          <p className="text-xs text-(--color-muted-foreground)">Import images for reuse across the project.</p>
+          <p className="text-xs text-(--color-muted-foreground)">
+            Import images for reuse across the project.
+          </p>
         </div>
         <button
           type="button"
@@ -246,12 +284,20 @@ const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }
             {sortedAssets.map((asset) => (
               <li key={asset.id} className={assetCardClassName}>
                 <div className="aspect-video bg-(--color-muted)">
-                  <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
+                  <img
+                    src={asset.url}
+                    alt={asset.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <div className="flex flex-col gap-2 px-3 py-2">
                   <div>
-                    <p className="truncate text-xs font-semibold text-(--color-app-foreground)">{asset.name}</p>
-                    <p className="text-[10px] uppercase tracking-wide text-(--color-muted-foreground)">{asset.mime}</p>
+                    <p className="truncate text-xs font-semibold text-(--color-app-foreground)">
+                      {asset.name}
+                    </p>
+                    <p className="text-[10px] tracking-wide text-(--color-muted-foreground) uppercase">
+                      {asset.mime}
+                    </p>
                   </div>
                   <button
                     type="button"

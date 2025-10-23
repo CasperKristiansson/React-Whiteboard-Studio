@@ -28,7 +28,12 @@ import {
 import type { TextShape } from '../types'
 import { updateTextShapeBounds } from '../utils/text-measure'
 
-const TOOL_OPTIONS: { value: Tool; label: string; shortcut: string; icon: IconType }[] = [
+const TOOL_OPTIONS: {
+  value: Tool
+  label: string
+  shortcut: string
+  icon: IconType
+}[] = [
   { value: 'select', label: 'Select', shortcut: 'V', icon: LuPointer },
   { value: 'rect', label: 'Rectangle', shortcut: 'R', icon: LuSquare },
   { value: 'ellipse', label: 'Ellipse', shortcut: 'O', icon: LuCircle },
@@ -378,7 +383,8 @@ const Toolbar = ({ variant = 'default' }: { variant?: ToolbarVariant }) => {
               )}
               onClick={handleItalicToggle}
             >
-              <LuItalic className="h-3.5 w-3.5" /> Italic{italicMixed ? ' (mixed)' : ''}
+              <LuItalic className="h-3.5 w-3.5" /> Italic
+              {italicMixed ? ' (mixed)' : ''}
             </button>
             <button
               type="button"
@@ -390,7 +396,8 @@ const Toolbar = ({ variant = 'default' }: { variant?: ToolbarVariant }) => {
               )}
               onClick={handleUnderlineToggle}
             >
-              <LuUnderline className="h-3.5 w-3.5" /> Underline{underlineMixed ? ' (mixed)' : ''}
+              <LuUnderline className="h-3.5 w-3.5" /> Underline
+              {underlineMixed ? ' (mixed)' : ''}
             </button>
             <div className="flex items-center gap-1">
               <button

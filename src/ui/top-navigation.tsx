@@ -54,7 +54,10 @@ const NavDropdown = ({
       >
         <span>{label}</span>
         <LuChevronDown
-          className={clsx('h-3.5 w-3.5 transition-transform', isOpen && 'rotate-180')}
+          className={clsx(
+            'h-3.5 w-3.5 transition-transform',
+            isOpen && 'rotate-180',
+          )}
         />
       </button>
       {isOpen ? (
@@ -62,7 +65,7 @@ const NavDropdown = ({
           id={`${id}-menu`}
           role="menu"
           className={clsx(
-            'absolute z-50 mt-3 max-h-[70vh] min-w-[240px] max-w-[min(90vw,56rem)] overflow-auto rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg) shadow-2xl backdrop-blur',
+            'absolute z-50 mt-3 max-h-[70vh] max-w-[min(90vw,56rem)] min-w-[240px] overflow-auto rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg) shadow-2xl backdrop-blur',
             align === 'right' ? 'right-0' : 'left-0',
             contentClassName ?? 'p-3',
           )}
@@ -111,7 +114,10 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
   }, [isOpen])
 
   useEffect(() => {
-    if (openProjectId && !projects.some((project) => project.id === openProjectId)) {
+    if (
+      openProjectId &&
+      !projects.some((project) => project.id === openProjectId)
+    ) {
       setOpenProjectId(null)
     }
   }, [openProjectId, projects])
@@ -145,13 +151,16 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
     [selectProject],
   )
 
-  const handleRenameStart = useCallback((projectId: string, currentName: string) => {
-    setRenameProjectId(projectId)
-    setRenameValue(currentName)
-    setStatus(null)
-    setDeleteProjectId(null)
-    setDeleteProjectName('')
-  }, [])
+  const handleRenameStart = useCallback(
+    (projectId: string, currentName: string) => {
+      setRenameProjectId(projectId)
+      setRenameValue(currentName)
+      setStatus(null)
+      setDeleteProjectId(null)
+      setDeleteProjectName('')
+    },
+    [],
+  )
 
   const handleRenameCancel = useCallback(() => {
     setRenameProjectId(null)
@@ -192,13 +201,16 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
     [duplicate],
   )
 
-  const handleDeleteRequest = useCallback((projectId: string, projectName: string) => {
-    setDeleteProjectId(projectId)
-    setDeleteProjectName(projectName)
-    setRenameProjectId(null)
-    setRenameValue('')
-    setStatus(null)
-  }, [])
+  const handleDeleteRequest = useCallback(
+    (projectId: string, projectName: string) => {
+      setDeleteProjectId(projectId)
+      setDeleteProjectName(projectName)
+      setRenameProjectId(null)
+      setRenameValue('')
+      setStatus(null)
+    },
+    [],
+  )
 
   const handleDeleteCancel = useCallback(() => {
     setDeleteProjectId(null)
@@ -228,7 +240,9 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
       </button>
 
       {loading ? (
-        <p className="text-xs text-(--color-muted-foreground)">Loading projects…</p>
+        <p className="text-xs text-(--color-muted-foreground)">
+          Loading projects…
+        </p>
       ) : null}
       {error ? <p className="text-xs text-red-500">{error}</p> : null}
       {status && status !== 'Project loaded' ? (
@@ -242,7 +256,10 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
             const isOpen = openProjectId === project.id
 
             return (
-              <li key={project.id} className="rounded-xl border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/85 shadow-sm">
+              <li
+                key={project.id}
+                className="rounded-xl border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/85 shadow-sm"
+              >
                 <button
                   type="button"
                   className={clsx(
@@ -253,7 +270,9 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
                   )}
                   onClick={() => void handleProjectClick(project.id)}
                 >
-                  <span className="truncate text-left font-medium">{project.name}</span>
+                  <span className="truncate text-left font-medium">
+                    {project.name}
+                  </span>
                   <span className="flex items-center gap-2 text-xs text-(--color-muted-foreground)">
                     {isActive ? (
                       <span className="flex items-center gap-1 text-(--color-accent)">
@@ -261,13 +280,16 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
                       </span>
                     ) : null}
                     <LuChevronDown
-                      className={clsx('h-3.5 w-3.5 transition-transform', isOpen ? 'rotate-180' : undefined)}
+                      className={clsx(
+                        'h-3.5 w-3.5 transition-transform',
+                        isOpen ? 'rotate-180' : undefined,
+                      )}
                     />
                   </span>
                 </button>
 
                 {isOpen ? (
-                  <div className="border-t border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/90 px-3 py-2 text-xs text-(--color-muted-foreground) rounded-b-xl">
+                  <div className="rounded-b-xl border-t border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/90 px-3 py-2 text-xs text-(--color-muted-foreground)">
                     {renameProjectId === project.id ? (
                       <form
                         className="grid gap-2"
@@ -277,14 +299,16 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
                         }}
                       >
                         <label className="flex flex-col gap-1 text-left text-(--color-app-foreground)">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-(--color-muted-foreground)">
+                          <span className="text-[10px] font-semibold tracking-wide text-(--color-muted-foreground) uppercase">
                             Rename project
                           </span>
                           <input
                             ref={renameInputRef}
                             type="text"
                             value={renameValue}
-                            onChange={(event) => setRenameValue(event.target.value)}
+                            onChange={(event) =>
+                              setRenameValue(event.target.value)
+                            }
                             className="w-full rounded-lg border border-(--color-elevated-border) bg-(--color-elevated-bg) px-3 py-2 text-sm text-(--color-app-foreground) shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
                             placeholder="Project name"
                           />
@@ -332,7 +356,9 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
                         <button
                           type="button"
                           className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-(--color-app-foreground) transition hover:border-(--color-button-border) hover:bg-(--color-button-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-                          onClick={() => handleRenameStart(project.id, project.name)}
+                          onClick={() =>
+                            handleRenameStart(project.id, project.name)
+                          }
                         >
                           <LuPencil className="h-4 w-4" /> Rename
                         </button>
@@ -346,7 +372,9 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
                         <button
                           type="button"
                           className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-red-500 transition hover:border-red-500/40 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-                          onClick={() => handleDeleteRequest(project.id, project.name)}
+                          onClick={() =>
+                            handleDeleteRequest(project.id, project.name)
+                          }
                         >
                           <LuTrash2 className="h-4 w-4" /> Delete
                         </button>
@@ -398,10 +426,10 @@ const TopNavigation = () => {
   }
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-[10px] z-30 flex -translate-x-1/2 justify-center px-16">
+    <div className="pointer-events-none absolute top-2.5 left-1/2 z-30 flex -translate-x-1/2 justify-center px-4">
       <nav
         ref={navRef}
-        className="pointer-events-auto flex min-w-0 max-w-[min(98vw,1480px)] flex-wrap items-center gap-2 rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg)/95 px-4 py-2 shadow-2xl backdrop-blur"
+        className="pointer-events-auto flex max-w-[min(98vw,1480px)] min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg)/95 px-4 py-2 shadow-2xl backdrop-blur"
         aria-label="Application navigation"
       >
         <NavDropdown
@@ -458,7 +486,7 @@ const TopNavigation = () => {
         >
           <div className="grid gap-4">
             <section className="grid gap-2">
-              <header className="text-xs font-semibold uppercase tracking-wide text-(--color-muted-foreground)">
+              <header className="text-xs font-semibold tracking-wide text-(--color-muted-foreground) uppercase">
                 Canvas
               </header>
               <button
@@ -469,7 +497,9 @@ const TopNavigation = () => {
                     ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
                     : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
                 )}
-                onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
+                onClick={() =>
+                  setSettings({ gridVisible: !settings.gridVisible })
+                }
                 aria-pressed={settings.gridVisible}
               >
                 <span className="flex items-center gap-2">
@@ -488,7 +518,9 @@ const TopNavigation = () => {
                     ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
                     : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
                 )}
-                onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
+                onClick={() =>
+                  setSettings({ snapEnabled: !settings.snapEnabled })
+                }
                 aria-pressed={settings.snapEnabled}
               >
                 <span className="flex items-center gap-2">

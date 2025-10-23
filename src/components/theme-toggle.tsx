@@ -16,7 +16,9 @@ const ThemeToggle = () => {
   const computedTheme: ThemePreference = (() => {
     if (theme === 'system') {
       if (typeof window !== 'undefined') {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        return window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
       }
       return 'light'
     }

@@ -25,29 +25,36 @@ export const useProjects = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const selectProject = useCallback(async (id: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      if (dirty) {
-        // Autosave already handles persisting the active document; rely on it.
+  const selectProject = useCallback(
+    async (id: string) => {
+      setLoading(true)
+      setError(null)
+      try {
+        if (dirty) {
+          // Autosave already handles persisting the active document; rely on it.
+        }
+        const doc = await loadDocument(id)
+        if (doc) {
+          replaceDocument(doc)
+          markClean()
+        }
+        setProjectId(id)
+        setCurrentProjectId(id)
+      } catch (err) {
+        console.error('Failed to load project', err)
+        const appError = toAppError(
+          err,
+          'PersistenceError',
+          'Could not load project',
+        )
+        pushError(appError)
+        setError(appError.message)
+      } finally {
+        setLoading(false)
       }
-      const doc = await loadDocument(id)
-      if (doc) {
-        replaceDocument(doc)
-        markClean()
-      }
-      setProjectId(id)
-      setCurrentProjectId(id)
-    } catch (err) {
-      console.error('Failed to load project', err)
-      const appError = toAppError(err, 'PersistenceError', 'Could not load project')
-      pushError(appError)
-      setError(appError.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [dirty, markClean, pushError, replaceDocument, setProjectId])
+    },
+    [dirty, markClean, pushError, replaceDocument, setProjectId],
+  )
 
   useEffect(() => {
     const init = async () => {
@@ -62,7 +69,9 @@ export const useProjects = () => {
           await selectProject(list[0].id)
         }
       } catch (error) {
-        pushError(toAppError(error, 'PersistenceError', 'Unable to load projects'))
+        pushError(
+          toAppError(error, 'PersistenceError', 'Unable to load projects'),
+        )
       }
     }
     void init()
@@ -75,31 +84,45 @@ export const useProjects = () => {
         setProjects((prev) => [project, ...prev])
         await selectProject(project.id)
       } catch (error) {
-        pushError(toAppError(error, 'PersistenceError', 'Failed to create project'))
+        pushError(
+          toAppError(error, 'PersistenceError', 'Failed to create project'),
+        )
       }
     },
     [pushError, selectProject],
   )
 
-  const rename = useCallback(async (id: string, name: string) => {
-    try {
-      await renameProject(id, name)
-      setProjects((prev) =>
-        prev.map((project) => (project.id === id ? { ...project, name } : project)),
-      )
-    } catch (error) {
-      pushError(toAppError(error, 'PersistenceError', 'Failed to rename project'))
-    }
-  }, [pushError])
+  const rename = useCallback(
+    async (id: string, name: string) => {
+      try {
+        await renameProject(id, name)
+        setProjects((prev) =>
+          prev.map((project) =>
+            project.id === id ? { ...project, name } : project,
+          ),
+        )
+      } catch (error) {
+        pushError(
+          toAppError(error, 'PersistenceError', 'Failed to rename project'),
+        )
+      }
+    },
+    [pushError],
+  )
 
-  const duplicate = useCallback(async (id: string) => {
-    try {
-      const project = await duplicateProject(id)
-      setProjects((prev) => [project, ...prev])
-    } catch (error) {
-      pushError(toAppError(error, 'PersistenceError', 'Failed to duplicate project'))
-    }
-  }, [pushError])
+  const duplicate = useCallback(
+    async (id: string) => {
+      try {
+        const project = await duplicateProject(id)
+        setProjects((prev) => [project, ...prev])
+      } catch (error) {
+        pushError(
+          toAppError(error, 'PersistenceError', 'Failed to duplicate project'),
+        )
+      }
+    },
+    [pushError],
+  )
 
   const remove = useCallback(
     async (id: string) => {
@@ -120,7 +143,9 @@ export const useProjects = () => {
           setProjectId(null)
         }
       } catch (error) {
-        pushError(toAppError(error, 'PersistenceError', 'Failed to delete project'))
+        pushError(
+          toAppError(error, 'PersistenceError', 'Failed to delete project'),
+        )
       }
     },
     [currentProjectId, pushError, selectProject, setProjectId],

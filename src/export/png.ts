@@ -64,12 +64,22 @@ const drawRectangle = (ctx: CanvasRenderingContext2D, shape: RectShape) => {
   const drawAxisAligned = () => {
     if (shape.fill) {
       ctx.fillStyle = toCssColor(shape.fill)
-      ctx.fillRect(shape.position.x, shape.position.y, shape.size.x, shape.size.y)
+      ctx.fillRect(
+        shape.position.x,
+        shape.position.y,
+        shape.size.x,
+        shape.size.y,
+      )
     }
     if (shape.strokeWidth > 0) {
       ctx.strokeStyle = toCssColor(shape.stroke)
       ctx.lineWidth = shape.strokeWidth
-      ctx.strokeRect(shape.position.x, shape.position.y, shape.size.x, shape.size.y)
+      ctx.strokeRect(
+        shape.position.x,
+        shape.position.y,
+        shape.size.x,
+        shape.size.y,
+      )
     }
   }
 
@@ -89,19 +99,37 @@ const drawRectangle = (ctx: CanvasRenderingContext2D, shape: RectShape) => {
   ctx.rotate((rotation * Math.PI) / 180)
   if (shape.fill) {
     ctx.fillStyle = toCssColor(shape.fill)
-    ctx.fillRect(-shape.size.x / 2, -shape.size.y / 2, shape.size.x, shape.size.y)
+    ctx.fillRect(
+      -shape.size.x / 2,
+      -shape.size.y / 2,
+      shape.size.x,
+      shape.size.y,
+    )
   }
   if (shape.strokeWidth > 0) {
     ctx.strokeStyle = toCssColor(shape.stroke)
     ctx.lineWidth = shape.strokeWidth
-    ctx.strokeRect(-shape.size.x / 2, -shape.size.y / 2, shape.size.x, shape.size.y)
+    ctx.strokeRect(
+      -shape.size.x / 2,
+      -shape.size.y / 2,
+      shape.size.x,
+      shape.size.y,
+    )
   }
   ctx.restore()
 }
 
 const drawEllipse = (ctx: CanvasRenderingContext2D, shape: EllipseShape) => {
   ctx.beginPath()
-  ctx.ellipse(shape.position.x, shape.position.y, shape.rx, shape.ry, 0, 0, Math.PI * 2)
+  ctx.ellipse(
+    shape.position.x,
+    shape.position.y,
+    shape.rx,
+    shape.ry,
+    0,
+    0,
+    Math.PI * 2,
+  )
   if (shape.fill) {
     ctx.fillStyle = toCssColor(shape.fill)
     ctx.fill()
@@ -113,7 +141,10 @@ const drawEllipse = (ctx: CanvasRenderingContext2D, shape: EllipseShape) => {
   }
 }
 
-const drawPolyline = (ctx: CanvasRenderingContext2D, shape: LineShape | ArrowShape) => {
+const drawPolyline = (
+  ctx: CanvasRenderingContext2D,
+  shape: LineShape | ArrowShape,
+) => {
   if (shape.points.length < 2) return
   ctx.beginPath()
   ctx.moveTo(shape.position.x, shape.position.y)
@@ -127,14 +158,26 @@ const drawPolyline = (ctx: CanvasRenderingContext2D, shape: LineShape | ArrowSha
   if (shape.type === 'arrow') {
     const last = shape.points[shape.points.length - 1]
     const prev = shape.points[shape.points.length - 2]
-    const end: Vec2 = { x: shape.position.x + last.x, y: shape.position.y + last.y }
-    const start: Vec2 = { x: shape.position.x + prev.x, y: shape.position.y + prev.y }
+    const end: Vec2 = {
+      x: shape.position.x + last.x,
+      y: shape.position.y + last.y,
+    }
+    const start: Vec2 = {
+      x: shape.position.x + prev.x,
+      y: shape.position.y + prev.y,
+    }
     const angle = Math.atan2(end.y - start.y, end.x - start.x)
     const head = (shape as ArrowShape).headSize
     ctx.beginPath()
     ctx.moveTo(end.x, end.y)
-    ctx.lineTo(end.x - head * Math.cos(angle - Math.PI / 6), end.y - head * Math.sin(angle - Math.PI / 6))
-    ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 6), end.y - head * Math.sin(angle + Math.PI / 6))
+    ctx.lineTo(
+      end.x - head * Math.cos(angle - Math.PI / 6),
+      end.y - head * Math.sin(angle - Math.PI / 6),
+    )
+    ctx.lineTo(
+      end.x - head * Math.cos(angle + Math.PI / 6),
+      end.y - head * Math.sin(angle + Math.PI / 6),
+    )
     ctx.closePath()
     ctx.fillStyle = toCssColor(shape.stroke)
     ctx.fill()
@@ -174,7 +217,11 @@ const drawText = (ctx: CanvasRenderingContext2D, shape: TextShape) => {
   }
 }
 
-const drawImage = (ctx: CanvasRenderingContext2D, shape: ImageShape, image: CanvasImageSource) => {
+const drawImage = (
+  ctx: CanvasRenderingContext2D,
+  shape: ImageShape,
+  image: CanvasImageSource,
+) => {
   const rotation = shape.rotation ?? 0
   if (rotation) {
     const center = {
@@ -184,10 +231,22 @@ const drawImage = (ctx: CanvasRenderingContext2D, shape: ImageShape, image: Canv
     ctx.save()
     ctx.translate(center.x, center.y)
     ctx.rotate((rotation * Math.PI) / 180)
-    ctx.drawImage(image, -shape.size.x / 2, -shape.size.y / 2, shape.size.x, shape.size.y)
+    ctx.drawImage(
+      image,
+      -shape.size.x / 2,
+      -shape.size.y / 2,
+      shape.size.x,
+      shape.size.y,
+    )
     ctx.restore()
   } else {
-    ctx.drawImage(image, shape.position.x, shape.position.y, shape.size.x, shape.size.y)
+    ctx.drawImage(
+      image,
+      shape.position.x,
+      shape.position.y,
+      shape.size.x,
+      shape.size.y,
+    )
   }
 }
 
@@ -278,7 +337,7 @@ export const exportDocumentToPNG = async (
   }
 
   return new Promise<Blob>((resolve, reject) => {
-    (canvas as HTMLCanvasElement).toBlob((blob) => {
+    ;(canvas as HTMLCanvasElement).toBlob((blob) => {
       if (blob) resolve(blob)
       else reject(new Error('Failed to produce PNG blob'))
     }, 'image/png')

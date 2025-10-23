@@ -11,10 +11,20 @@ import {
 } from '../state/store'
 import { useErrorStore } from '../state/error'
 import { toAppError } from '../errors'
-import { LuFileJson, LuImage, LuLayers, LuFileCode2, LuShapes } from 'react-icons/lu'
+import {
+  LuFileJson,
+  LuImage,
+  LuLayers,
+  LuFileCode2,
+  LuShapes,
+} from 'react-icons/lu'
 
 const sanitizeFileName = (name: string) =>
-  name.trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]+/gi, '').toLowerCase() || 'document'
+  name
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]+/gi, '')
+    .toLowerCase() || 'document'
 
 const ExportDialog = () => {
   const projectId = useAppSelector(selectProjectId)
@@ -38,7 +48,9 @@ const ExportDialog = () => {
 
   const handleJsonExport = useCallback(async () => {
     if (!projectId) {
-      setJsonError('No project loaded. Try again once autosave has finished initialising.')
+      setJsonError(
+        'No project loaded. Try again once autosave has finished initialising.',
+      )
       return
     }
 
@@ -58,7 +70,11 @@ const ExportDialog = () => {
       URL.revokeObjectURL(url)
       setJsonMessage('Export ready')
     } catch (err) {
-      const appError = toAppError(err, 'ExportError', 'Failed to export project')
+      const appError = toAppError(
+        err,
+        'ExportError',
+        'Failed to export project',
+      )
       pushError(appError)
       setJsonError(appError.message)
     } finally {
@@ -146,9 +162,12 @@ const ExportDialog = () => {
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
       <header className="mb-4 space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-(--color-app-foreground)">Export</h2>
+          <h2 className="text-base font-semibold text-(--color-app-foreground)">
+            Export
+          </h2>
           <p className="text-xs text-(--color-muted-foreground)">
-            Download your project as a `.wb.json` file including embedded assets.
+            Download your project as a `.wb.json` file including embedded
+            assets.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -203,7 +222,9 @@ const ExportDialog = () => {
       <dl className="grid gap-2 text-xs text-(--color-muted-foreground)">
         <div className="flex justify-between">
           <dt>File name</dt>
-          <dd className="font-mono text-(--color-app-foreground)">{fileName}</dd>
+          <dd className="font-mono text-(--color-app-foreground)">
+            {fileName}
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt>Shapes</dt>
