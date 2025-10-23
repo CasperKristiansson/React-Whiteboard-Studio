@@ -144,19 +144,19 @@ const ExportDialog = () => {
 
   return (
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
-      <header className="mb-3 flex items-center justify-between">
+      <header className="mb-4 space-y-3">
         <div>
           <h2 className="text-base font-semibold text-(--color-app-foreground)">Export</h2>
           <p className="text-xs text-(--color-muted-foreground)">
             Download your project as a `.wb.json` file including embedded assets.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             type="button"
             onClick={handleJsonExport}
             disabled={isExportingJson || !projectId}
-            className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LuFileJson className="h-4 w-4" />
             {isExportingJson ? 'Preparing…' : 'Export .wb.json'}
@@ -165,7 +165,7 @@ const ExportDialog = () => {
             type="button"
             onClick={() => handlePngExport('document')}
             disabled={isExportingPng}
-            className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LuImage className="h-4 w-4" />
             {isExportingPng ? 'Preparing…' : 'Export PNG'}
@@ -174,7 +174,7 @@ const ExportDialog = () => {
             type="button"
             onClick={() => handlePngExport('selection')}
             disabled={isExportingPng}
-            className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LuLayers className="h-4 w-4" />
             {isExportingPng ? 'Preparing…' : 'PNG (selection)'}
@@ -183,7 +183,7 @@ const ExportDialog = () => {
             type="button"
             onClick={() => handleSvgExport('document')}
             disabled={isExportingSvg}
-            className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LuFileCode2 className="h-4 w-4" />
             {isExportingSvg ? 'Preparing…' : 'Export SVG'}
@@ -192,7 +192,7 @@ const ExportDialog = () => {
             type="button"
             onClick={() => handleSvgExport('selection')}
             disabled={isExportingSvg}
-            className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LuShapes className="h-4 w-4" />
             {isExportingSvg ? 'Preparing…' : 'SVG (selection)'}

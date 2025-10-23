@@ -60,7 +60,7 @@ const ImportDialog = () => {
 
   return (
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
-      <header className="mb-3 flex items-center justify-between">
+      <header className="mb-4 space-y-3">
         <div>
           <h2 className="text-base font-semibold text-(--color-app-foreground)">Import</h2>
           <p className="text-xs text-(--color-muted-foreground)">
@@ -70,7 +70,7 @@ const ImportDialog = () => {
         <button
           type="button"
           onClick={handleTrigger}
-          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
           disabled={!projectId || isImporting}
         >
           <LuUpload className="h-4 w-4" />

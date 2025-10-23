@@ -13,7 +13,6 @@ import {
   screenPointToWorld,
   worldPointToScreen,
 } from './transform'
-import { LuGrid2X2, LuMagnet } from 'react-icons/lu'
 import {
   MAX_ZOOM,
   MIN_ZOOM,
@@ -281,7 +280,6 @@ export const CanvasViewport = () => {
   const selectionIds = useAppSelector(selectSelection)
   const setViewport = useAppStore((state) => state.setViewport)
   const commit = useAppStore((state) => state.commit)
-  const setSettings = useAppStore((state) => state.setSettings)
   const select = useAppStore((state) => state.select)
   const clearSelection = useAppStore((state) => state.clearSelection)
 
@@ -1389,7 +1387,7 @@ export const CanvasViewport = () => {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-[520px] w-full flex-1 overflow-hidden rounded-xl border border-(--color-elevated-border) bg-(--color-canvas-bg) backdrop-blur-sm transition-colors select-none"
+      className="relative flex h-full w-full select-none overflow-hidden bg-(--color-canvas-bg) transition-colors"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -1433,28 +1431,6 @@ export const CanvasViewport = () => {
         <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
       </div>
 
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
-          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-          aria-pressed={settings.gridVisible}
-          aria-label={settings.gridVisible ? 'Hide grid' : 'Show grid'}
-        >
-          <LuGrid2X2 className="h-4 w-4" />
-          {settings.gridVisible ? 'Hide grid' : 'Show grid'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
-          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-          aria-pressed={settings.snapEnabled}
-          aria-label={settings.snapEnabled ? 'Disable snapping' : 'Enable snapping'}
-        >
-          <LuMagnet className="h-4 w-4" />
-          {settings.snapEnabled ? 'Snap on' : 'Snap off'}
-        </button>
-      </div>
     </div>
   )
 }
