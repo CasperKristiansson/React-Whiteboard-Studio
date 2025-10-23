@@ -236,10 +236,8 @@ export const useAppStore = create<AppStore>()(
 
     setTheme: (theme) => {
       set((state) => {
-        captureHistorySnapshot(state)
         state.theme = theme
         state.document.theme = theme
-        state.dirty = true
       })
     },
 

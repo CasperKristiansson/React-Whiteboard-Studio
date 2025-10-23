@@ -16,7 +16,6 @@ import ContextPanel from './context-panel'
 import AssetManager from './asset-manager'
 import ExportDialog from './export-dialog'
 import ImportDialog from './import-dialog'
-import ThemeToggle from '../components/theme-toggle'
 import {
   selectActiveTool,
   selectSettings,
@@ -403,7 +402,7 @@ const TopNavigation = () => {
   }
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-[10px] z-30 flex -translate-x-1/2 justify-center px-4">
+    <div className="pointer-events-none absolute left-1/2 top-[10px] z-30 flex -translate-x-1/2 justify-center px-8">
       <nav
         ref={navRef}
         className="pointer-events-auto flex min-w-0 max-w-[min(94vw,1100px)] flex-wrap items-center gap-3 rounded-2xl border border-(--color-elevated-border) bg-(--color-elevated-bg)/95 px-4 py-2 shadow-2xl backdrop-blur"
@@ -454,6 +453,54 @@ const TopNavigation = () => {
         </NavDropdown>
 
         <NavDropdown
+          id="canvas"
+          label="Canvas"
+          isOpen={openMenu === 'canvas'}
+          onToggle={toggleMenu}
+        >
+          <div className="grid gap-2">
+            <button
+              type="button"
+              className={clsx(
+                'flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                settings.gridVisible
+                  ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
+                  : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
+              )}
+              onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
+              aria-pressed={settings.gridVisible}
+            >
+              <span className="flex items-center gap-2">
+                <LuGrid2X2 className="h-4 w-4" />
+                Grid
+              </span>
+              <span className="text-xs text-(--color-muted-foreground)">
+                {settings.gridVisible ? 'On' : 'Off'}
+              </span>
+            </button>
+            <button
+              type="button"
+              className={clsx(
+                'flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                settings.snapEnabled
+                  ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
+                  : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
+              )}
+              onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
+              aria-pressed={settings.snapEnabled}
+            >
+              <span className="flex items-center gap-2">
+                <LuMagnet className="h-4 w-4" />
+                Snap
+              </span>
+              <span className="text-xs text-(--color-muted-foreground)">
+                {settings.snapEnabled ? 'On' : 'Off'}
+              </span>
+            </button>
+          </div>
+        </NavDropdown>
+
+        <NavDropdown
           id="projects"
           label="Projects"
           isOpen={openMenu === 'projects'}
@@ -476,38 +523,6 @@ const TopNavigation = () => {
             <ExportDialog />
           </div>
         </NavDropdown>
-
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            className={clsx(
-              'flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
-              settings.gridVisible
-                ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow'
-                : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
-            )}
-            onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
-            aria-pressed={settings.gridVisible}
-          >
-            <LuGrid2X2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Grid</span>
-          </button>
-          <button
-            type="button"
-            className={clsx(
-              'flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
-              settings.snapEnabled
-                ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow'
-                : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
-            )}
-            onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
-            aria-pressed={settings.snapEnabled}
-          >
-            <LuMagnet className="h-4 w-4" />
-            <span className="hidden sm:inline">Snap</span>
-          </button>
-          <ThemeToggle />
-        </div>
       </nav>
     </div>
   )

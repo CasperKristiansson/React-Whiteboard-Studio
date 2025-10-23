@@ -4,6 +4,7 @@ import { IconContext } from 'react-icons'
 import CanvasViewport from './canvas/canvas-viewport'
 import { useKeyboardShortcuts } from './app/keyboard'
 import TopNavigation from './ui/top-navigation'
+import ThemeToggle from './components/theme-toggle'
 import DebugOverlay from './dev/debug-overlay'
 import ErrorToasts from './ui/error-toasts'
 import { selectTheme, useAppSelector, useAppStore } from './state/store'
@@ -79,6 +80,11 @@ function App() {
             <CanvasViewport />
           </div>
           <TopNavigation />
+          <div className="pointer-events-none absolute right-4 top-[10px] z-40">
+            <div className="pointer-events-auto">
+              <ThemeToggle />
+            </div>
+          </div>
         </main>
         <DebugOverlay enabled={debugEnabled} />
         <ErrorToasts />
