@@ -256,7 +256,9 @@ const Toolbar = () => {
                 type="text"
                 className="rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
                 value={sharedFontFamily ?? ''}
-                placeholder={sharedFontFamily === undefined ? 'Mixed' : undefined}
+                placeholder={
+                  sharedFontFamily === undefined ? 'Mixed' : undefined
+                }
                 onChange={handleFontFamilyChange}
               />
             </label>
@@ -286,7 +288,9 @@ const Toolbar = () => {
                 step="100"
                 className="rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
                 value={sharedFontWeight ?? ''}
-                placeholder={sharedFontWeight === undefined ? 'Mixed' : undefined}
+                placeholder={
+                  sharedFontWeight === undefined ? 'Mixed' : undefined
+                }
                 onChange={handleFontWeightChange}
               />
             </label>
@@ -302,7 +306,9 @@ const Toolbar = () => {
                 step="0.1"
                 className="rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
                 value={sharedLetterSpacing ?? ''}
-                placeholder={sharedLetterSpacing === undefined ? 'Mixed' : undefined}
+                placeholder={
+                  sharedLetterSpacing === undefined ? 'Mixed' : undefined
+                }
                 onChange={handleLetterSpacingChange}
               />
             </label>
@@ -317,7 +323,9 @@ const Toolbar = () => {
                 step="0.1"
                 className="rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
                 value={sharedLineHeight ?? ''}
-                placeholder={sharedLineHeight === undefined ? 'Mixed' : undefined}
+                placeholder={
+                  sharedLineHeight === undefined ? 'Mixed' : undefined
+                }
                 onChange={handleLineHeightChange}
               />
             </label>

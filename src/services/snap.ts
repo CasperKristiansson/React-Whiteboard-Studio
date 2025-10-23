@@ -2,6 +2,24 @@ import type { Shape, Vec2 } from '../types'
 import type { ShapeBounds } from './geometry'
 import { getShapeBounds } from './geometry'
 
+export type SnapGuideLine = {
+  kind: 'line'
+  axis: 'x' | 'y'
+  position: number
+  start: number
+  end: number
+  label?: string
+}
+
+export type SnapGuideAngle = {
+  kind: 'angle'
+  center: Vec2
+  angle: number
+  label: string
+}
+
+export type SnapGuide = SnapGuideLine | SnapGuideAngle
+
 type Axis = 'x' | 'y'
 
 const centerOf = (min: number, max: number) => (min + max) / 2
@@ -29,7 +47,10 @@ export type RotationSnapOptions = SnapCalculationOptions & {
   angleTolerance?: number
 }
 
-const collectCandidatesForAxis = (bounds: ShapeBounds[], axis: Axis): number[] => {
+const collectCandidatesForAxis = (
+  bounds: ShapeBounds[],
+  axis: Axis,
+): number[] => {
   const candidates: number[] = []
   bounds.forEach((bound) => {
     if (axis === 'x') {
@@ -41,40 +62,53 @@ const collectCandidatesForAxis = (bounds: ShapeBounds[], axis: Axis): number[] =
   return candidates
 }
 
+type AxisSnapCandidate = {
+  diff: number
+  target: number
+  focus: 'min' | 'center' | 'max'
+  source: 'grid' | 'shape'
+  distance: number
+}
+
 const applyAxisSnap = (
   positions: { min: number; center: number; max: number },
   candidates: number[],
   gridSize: number,
   tolerance: number,
-) => {
-  let bestDiff = 0
-  let bestDistance = Number.POSITIVE_INFINITY
+): AxisSnapCandidate | null => {
+  let best: AxisSnapCandidate | null = null
 
-  const test = (target: number, value: number) => {
+  const consider = (
+    target: number,
+    focus: 'min' | 'center' | 'max',
+    source: 'grid' | 'shape',
+  ) => {
+    const value = positions[focus]
     const diff = target - value
     const distance = Math.abs(diff)
-    if (distance <= tolerance && distance < bestDistance) {
-      bestDiff = diff
-      bestDistance = distance
+    if (distance > tolerance) return
+    if (!best || distance < best.distance) {
+      best = { diff, target, focus, source, distance }
     }
   }
 
-  const maybeSnapToGrid = (value: number) => {
+  const snapValue = (focus: 'min' | 'center' | 'max') => {
+    const value = positions[focus]
     const snapped = Math.round(value / gridSize) * gridSize
-    test(snapped, value)
+    consider(snapped, focus, 'grid')
   }
 
-  maybeSnapToGrid(positions.min)
-  maybeSnapToGrid(positions.center)
-  maybeSnapToGrid(positions.max)
+  snapValue('min')
+  snapValue('center')
+  snapValue('max')
 
   candidates.forEach((candidate) => {
-    test(candidate, positions.min)
-    test(candidate, positions.center)
-    test(candidate, positions.max)
+    consider(candidate, 'min', 'shape')
+    consider(candidate, 'center', 'shape')
+    consider(candidate, 'max', 'shape')
   })
 
-  return bestDistance === Number.POSITIVE_INFINITY ? 0 : bestDiff
+  return best
 }
 
 const snapEdge = (
@@ -82,33 +116,42 @@ const snapEdge = (
   candidates: number[],
   gridSize: number,
   tolerance: number,
-) => {
-  let bestDiff = 0
-  let bestDistance = Number.POSITIVE_INFINITY
+): {
+  diff: number
+  target: number
+  source: 'grid' | 'shape'
+  distance: number
+} | null => {
+  let best: {
+    diff: number
+    target: number
+    source: 'grid' | 'shape'
+    distance: number
+  } | null = null
 
-  const test = (target: number) => {
+  const consider = (target: number, source: 'grid' | 'shape') => {
     const diff = target - value
     const distance = Math.abs(diff)
-    if (distance <= tolerance && distance < bestDistance) {
-      bestDiff = diff
-      bestDistance = distance
+    if (distance > tolerance) return
+    if (!best || distance < best.distance) {
+      best = { diff, target, source, distance }
     }
   }
 
   const snapped = Math.round(value / gridSize) * gridSize
-  test(snapped)
-  candidates.forEach(test)
+  consider(snapped, 'grid')
+  candidates.forEach((candidate) => consider(candidate, 'shape'))
 
-  return bestDistance === Number.POSITIVE_INFINITY ? 0 : bestDiff
+  return best
 }
 
 export const calculateTranslationSnap = (
   selectionBounds: ShapeBounds,
   delta: Vec2,
   options: SnapCalculationOptions,
-): Vec2 => {
+): { delta: Vec2; guides: SnapGuide[] } => {
   if (!options.enabled) {
-    return delta
+    return { delta, guides: [] }
   }
 
   const tolerance = toWorldTolerance(options.tolerance, options.viewportScale)
@@ -118,21 +161,69 @@ export const calculateTranslationSnap = (
   const translatedX = {
     min: selectionBounds.minX + delta.x,
     max: selectionBounds.maxX + delta.x,
-    center: centerOf(selectionBounds.minX + delta.x, selectionBounds.maxX + delta.x),
+    center: centerOf(
+      selectionBounds.minX + delta.x,
+      selectionBounds.maxX + delta.x,
+    ),
   }
   const translatedY = {
     min: selectionBounds.minY + delta.y,
     max: selectionBounds.maxY + delta.y,
-    center: centerOf(selectionBounds.minY + delta.y, selectionBounds.maxY + delta.y),
+    center: centerOf(
+      selectionBounds.minY + delta.y,
+      selectionBounds.maxY + delta.y,
+    ),
   }
 
-  const snapX = applyAxisSnap(translatedX, candidatesX, options.gridSize, tolerance)
-  const snapY = applyAxisSnap(translatedY, candidatesY, options.gridSize, tolerance)
+  const snapX = applyAxisSnap(
+    translatedX,
+    candidatesX,
+    options.gridSize,
+    tolerance,
+  )
+  const snapY = applyAxisSnap(
+    translatedY,
+    candidatesY,
+    options.gridSize,
+    tolerance,
+  )
 
-  return {
-    x: delta.x + snapX,
-    y: delta.y + snapY,
+  const resolvedDelta: Vec2 = {
+    x: delta.x + (snapX ? snapX.diff : 0),
+    y: delta.y + (snapY ? snapY.diff : 0),
   }
+
+  const guides: SnapGuide[] = []
+  const snappedBounds = {
+    minX: selectionBounds.minX + resolvedDelta.x,
+    maxX: selectionBounds.maxX + resolvedDelta.x,
+    minY: selectionBounds.minY + resolvedDelta.y,
+    maxY: selectionBounds.maxY + resolvedDelta.y,
+  }
+
+  if (snapX && snapX.diff !== 0) {
+    guides.push({
+      kind: 'line',
+      axis: 'x',
+      position: snapX.target,
+      start: snappedBounds.minY,
+      end: snappedBounds.maxY,
+      label: `${Math.round(Math.abs(snapX.diff) * options.viewportScale)}px`,
+    })
+  }
+
+  if (snapY && snapY.diff !== 0) {
+    guides.push({
+      kind: 'line',
+      axis: 'y',
+      position: snapY.target,
+      start: snappedBounds.minX,
+      end: snappedBounds.maxX,
+      label: `${Math.round(Math.abs(snapY.diff) * options.viewportScale)}px`,
+    })
+  }
+
+  return { delta: resolvedDelta, guides }
 }
 
 export const calculateScaleSnap = (
@@ -140,9 +231,9 @@ export const calculateScaleSnap = (
   moving: ScaleMovingEdges,
   options: SnapCalculationOptions,
   minSize = 1,
-): ShapeBounds => {
+): { bounds: ShapeBounds; guides: SnapGuide[] } => {
   if (!options.enabled) {
-    return newBounds
+    return { bounds: newBounds, guides: [] }
   }
 
   const tolerance = toWorldTolerance(options.tolerance, options.viewportScale)
@@ -150,33 +241,66 @@ export const calculateScaleSnap = (
   const candidatesY = collectCandidatesForAxis(options.otherBounds, 'y')
 
   const result = { ...newBounds }
+  const guides: SnapGuide[] = []
 
-  if (moving.minX) {
-    const diff = snapEdge(result.minX, candidatesX, options.gridSize, tolerance)
-    if (diff !== 0) {
-      result.minX += diff
-    }
+  const minXSnap =
+    moving.minX &&
+    snapEdge(result.minX, candidatesX, options.gridSize, tolerance)
+  if (minXSnap) {
+    result.minX += minXSnap.diff
+    guides.push({
+      kind: 'line',
+      axis: 'x',
+      position: result.minX,
+      start: result.minY,
+      end: result.maxY,
+      label: `${Math.round(Math.abs(minXSnap.diff) * options.viewportScale)}px`,
+    })
   }
 
-  if (moving.maxX) {
-    const diff = snapEdge(result.maxX, candidatesX, options.gridSize, tolerance)
-    if (diff !== 0) {
-      result.maxX += diff
-    }
+  const maxXSnap =
+    moving.maxX &&
+    snapEdge(result.maxX, candidatesX, options.gridSize, tolerance)
+  if (maxXSnap) {
+    result.maxX += maxXSnap.diff
+    guides.push({
+      kind: 'line',
+      axis: 'x',
+      position: result.maxX,
+      start: result.minY,
+      end: result.maxY,
+      label: `${Math.round(Math.abs(maxXSnap.diff) * options.viewportScale)}px`,
+    })
   }
 
-  if (moving.minY) {
-    const diff = snapEdge(result.minY, candidatesY, options.gridSize, tolerance)
-    if (diff !== 0) {
-      result.minY += diff
-    }
+  const minYSnap =
+    moving.minY &&
+    snapEdge(result.minY, candidatesY, options.gridSize, tolerance)
+  if (minYSnap) {
+    result.minY += minYSnap.diff
+    guides.push({
+      kind: 'line',
+      axis: 'y',
+      position: result.minY,
+      start: result.minX,
+      end: result.maxX,
+      label: `${Math.round(Math.abs(minYSnap.diff) * options.viewportScale)}px`,
+    })
   }
 
-  if (moving.maxY) {
-    const diff = snapEdge(result.maxY, candidatesY, options.gridSize, tolerance)
-    if (diff !== 0) {
-      result.maxY += diff
-    }
+  const maxYSnap =
+    moving.maxY &&
+    snapEdge(result.maxY, candidatesY, options.gridSize, tolerance)
+  if (maxYSnap) {
+    result.maxY += maxYSnap.diff
+    guides.push({
+      kind: 'line',
+      axis: 'y',
+      position: result.maxY,
+      start: result.minX,
+      end: result.maxX,
+      label: `${Math.round(Math.abs(maxYSnap.diff) * options.viewportScale)}px`,
+    })
   }
 
   if (result.maxX - result.minX < minSize) {
@@ -195,21 +319,24 @@ export const calculateScaleSnap = (
     }
   }
 
-  return result
+  return { bounds: result, guides }
 }
 
 export const calculateRotationSnap = (
   angle: number,
   options: RotationSnapOptions,
-): number => {
+): { angle: number; snapped: boolean; diff: number } => {
   if (!options.enabled) {
-    return angle
+    return { angle, snapped: false, diff: 0 }
   }
 
   const step = options.angleStep ?? Math.PI / 12
   const tolerance = options.angleTolerance ?? step / 2
   const snapped = Math.round(angle / step) * step
-  return Math.abs(snapped - angle) <= tolerance ? snapped : angle
+  if (Math.abs(snapped - angle) <= tolerance) {
+    return { angle: snapped, snapped: true, diff: snapped - angle }
+  }
+  return { angle, snapped: false, diff: 0 }
 }
 
 export const buildSnapOptions = ({

@@ -73,10 +73,7 @@ export const beginPolyline = (
 
 const shouldSample = (current: Vec2, next: Vec2) =>
   Math.hypot(next.x - current.x, next.y - current.y) >= 0.5
-const applyPolylineShape = (
-  state: PolylineState,
-  points: Vec2[],
-) => {
+const applyPolylineShape = (state: PolylineState, points: Vec2[]) => {
   const store = useAppStore.getState()
   const relativePoints = points.map((p) => ({
     x: p.x - state.position.x,

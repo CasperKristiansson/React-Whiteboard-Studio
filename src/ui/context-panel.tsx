@@ -209,19 +209,22 @@ const ContextPanel = () => {
     return value ?? false
   }, [textShapes, allText])
 
-  const shadowsEqual = useCallback((a: TextShape['shadow'] | null, b: TextShape['shadow'] | null) => {
-    if (a === b) return true
-    if (!a || !b) return false
-    return (
-      a.offset.x === b.offset.x &&
-      a.offset.y === b.offset.y &&
-      a.blur === b.blur &&
-      a.color.r === b.color.r &&
-      a.color.g === b.color.g &&
-      a.color.b === b.color.b &&
-      a.color.a === b.color.a
-    )
-  }, [])
+  const shadowsEqual = useCallback(
+    (a: TextShape['shadow'] | null, b: TextShape['shadow'] | null) => {
+      if (a === b) return true
+      if (!a || !b) return false
+      return (
+        a.offset.x === b.offset.x &&
+        a.offset.y === b.offset.y &&
+        a.blur === b.blur &&
+        a.color.r === b.color.r &&
+        a.color.g === b.color.g &&
+        a.color.b === b.color.b &&
+        a.color.a === b.color.a
+      )
+    },
+    [],
+  )
 
   const shadowState = useMemo(() => {
     if (!allText || !textShapes.length) {
@@ -423,23 +426,26 @@ const ContextPanel = () => {
   const handleShadowToggle = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const enabled = event.target.checked
-      applyChange(enabled ? 'Enable text shadow' : 'Disable text shadow', (shape) => {
-        if (!isTextShape(shape)) return
-        if (enabled) {
-          const existing = shape.shadow ?? {
-            offset: { ...DEFAULT_TEXT_SHADOW.offset },
-            blur: DEFAULT_TEXT_SHADOW.blur,
-            color: { ...DEFAULT_TEXT_SHADOW.color },
+      applyChange(
+        enabled ? 'Enable text shadow' : 'Disable text shadow',
+        (shape) => {
+          if (!isTextShape(shape)) return
+          if (enabled) {
+            const existing = shape.shadow ?? {
+              offset: { ...DEFAULT_TEXT_SHADOW.offset },
+              blur: DEFAULT_TEXT_SHADOW.blur,
+              color: { ...DEFAULT_TEXT_SHADOW.color },
+            }
+            shape.shadow = {
+              offset: { ...existing.offset },
+              blur: existing.blur,
+              color: { ...existing.color },
+            }
+          } else {
+            shape.shadow = undefined
           }
-          shape.shadow = {
-            offset: { ...existing.offset },
-            blur: existing.blur,
-            color: { ...existing.color },
-          }
-        } else {
-          shape.shadow = undefined
-        }
-      })
+        },
+      )
     },
     [applyChange],
   )
@@ -481,21 +487,20 @@ const ContextPanel = () => {
   )
 
   const handleShadowOffsetChange = useCallback(
-    (axis: 'x' | 'y') =>
-      (event: ChangeEvent<HTMLInputElement>) => {
-        const value = Number.parseFloat(event.target.value)
-        if (Number.isNaN(value)) return
-        applyChange('Change text shadow offset', (shape) => {
-          if (!isTextShape(shape) || !shape.shadow) return
-          shape.shadow = {
-            ...shape.shadow,
-            offset: {
-              ...shape.shadow.offset,
-              [axis]: value,
-            },
-          }
-        })
-      },
+    (axis: 'x' | 'y') => (event: ChangeEvent<HTMLInputElement>) => {
+      const value = Number.parseFloat(event.target.value)
+      if (Number.isNaN(value)) return
+      applyChange('Change text shadow offset', (shape) => {
+        if (!isTextShape(shape) || !shape.shadow) return
+        shape.shadow = {
+          ...shape.shadow,
+          offset: {
+            ...shape.shadow.offset,
+            [axis]: value,
+          },
+        }
+      })
+    },
     [applyChange],
   )
 
@@ -742,7 +747,9 @@ const ContextPanel = () => {
                       checked={shadowEnabled}
                       onChange={handleShadowToggle}
                     />
-                    <span className="text-xs text-(--color-muted-foreground)">Enabled</span>
+                    <span className="text-xs text-(--color-muted-foreground)">
+                      Enabled
+                    </span>
                   </label>
                 </div>
 
@@ -773,7 +780,9 @@ const ContextPanel = () => {
                       max="1"
                       step="0.05"
                       value={
-                        shadowEnabled && !shadowMixed ? shadowOpacityValue.toFixed(2) : ''
+                        shadowEnabled && !shadowMixed
+                          ? shadowOpacityValue.toFixed(2)
+                          : ''
                       }
                       placeholder={shadowMixed ? 'Mixed' : undefined}
                       onChange={handleShadowOpacityChange}

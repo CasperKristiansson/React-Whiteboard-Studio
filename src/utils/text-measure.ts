@@ -52,7 +52,8 @@ const approximateMetrics = (options: MeasureOptions): TextMetrics => {
   )
   const width =
     longestLineLength * (options.fontSize * 0.6 + options.letterSpacing)
-  const height = Math.max(1, lines.length) * options.fontSize * options.lineHeight
+  const height =
+    Math.max(1, lines.length) * options.fontSize * options.lineHeight
   return {
     width,
     height,
@@ -83,7 +84,9 @@ export const measureTextMetrics = (options: MeasureOptions): TextMetrics => {
 
   let maxWidth = 0
   const spacingAdjustment = (line: string) =>
-    options.letterSpacing > 0 ? Math.max(0, line.length - 1) * options.letterSpacing : 0
+    options.letterSpacing > 0
+      ? Math.max(0, line.length - 1) * options.letterSpacing
+      : 0
 
   lines.forEach((line) => {
     const measurement = ctx.measureText(line || ' ')
@@ -94,7 +97,9 @@ export const measureTextMetrics = (options: MeasureOptions): TextMetrics => {
   })
 
   const height =
-    Math.max(1, lines.length) * options.fontSize * Math.max(options.lineHeight, 0.5)
+    Math.max(1, lines.length) *
+    options.fontSize *
+    Math.max(options.lineHeight, 0.5)
 
   const metrics: TextMetrics = {
     width: maxWidth,
@@ -127,11 +132,13 @@ export const updateTextShapeBounds = (shape: TextShape) => {
   })
 
   const width = Math.max(metrics.width + HORIZONTAL_PADDING, 64)
-  const height = Math.max(metrics.height + VERTICAL_PADDING, shape.font.size * 1.2)
+  const height = Math.max(
+    metrics.height + VERTICAL_PADDING,
+    shape.font.size * 1.2,
+  )
 
   shape.box = {
     x: width,
     y: height,
   }
 }
-

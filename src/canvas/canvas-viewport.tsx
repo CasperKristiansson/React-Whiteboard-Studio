@@ -38,10 +38,11 @@ import {
   applyRotation,
   type TransformSnapshot,
 } from './controllers/transform-controller'
+import GuidesOverlay from './overlays/guides-overlay'
 import {
   buildSnapOptions,
-  calculateRotationSnap,
   type ScaleMovingEdges,
+  type SnapGuide,
 } from '../services/snap'
 import {
   createWorldMarquee,
@@ -93,24 +94,11 @@ const ROTATE_SNAP_STEP_RADIANS = Math.PI / 12
 const SNAP_GRID_SIZE = 5
 const SNAP_PIXEL_TOLERANCE = 8
 
-const snapRotationAngle = (angle: number, shouldSnap: boolean) =>
-  shouldSnap
-    ? Math.round(angle / ROTATE_SNAP_STEP_RADIANS) * ROTATE_SNAP_STEP_RADIANS
-    : angle
-
 const createMovingEdges = (handle: HandlePosition) => ({
-  minX:
-    handle === 'left' ||
-    handle === 'top-left' ||
-    handle === 'bottom-left',
+  minX: handle === 'left' || handle === 'top-left' || handle === 'bottom-left',
   maxX:
-    handle === 'right' ||
-    handle === 'top-right' ||
-    handle === 'bottom-right',
-  minY:
-    handle === 'top' ||
-    handle === 'top-left' ||
-    handle === 'top-right',
+    handle === 'right' || handle === 'top-right' || handle === 'bottom-right',
+  minY: handle === 'top' || handle === 'top-left' || handle === 'top-right',
   maxY:
     handle === 'bottom' ||
     handle === 'bottom-left' ||
@@ -316,6 +304,7 @@ export const CanvasViewport = () => {
   const pendingTextState = useRef<TextCreationState | null>(null)
   const [editingTextId, setEditingTextId] = useState<string | null>(null)
   const updateShape = useAppStore((state) => state.updateShape)
+  const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([])
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -356,13 +345,13 @@ export const CanvasViewport = () => {
       viewport,
     )
 
-  return {
-    x: Math.min(topLeft.x, bottomRight.x),
-    y: Math.min(topLeft.y, bottomRight.y),
-    width: Math.abs(bottomRight.x - topLeft.x),
-    height: Math.abs(bottomRight.y - topLeft.y),
-  }
-}, [selectionWorldBounds, viewport])
+    return {
+      x: Math.min(topLeft.x, bottomRight.x),
+      y: Math.min(topLeft.y, bottomRight.y),
+      width: Math.abs(bottomRight.x - topLeft.x),
+      height: Math.abs(bottomRight.y - topLeft.y),
+    }
+  }, [selectionWorldBounds, viewport])
 
   const editingTextShape = useMemo<TextShape | null>(() => {
     if (!editingTextId) return null
@@ -661,6 +650,8 @@ export const CanvasViewport = () => {
     const node = containerRef.current
     if (!node) return
 
+    setSnapGuides([])
+
     if (editingTextId) {
       finalizeText(editingTextId)
       setEditingTextId(null)
@@ -712,7 +703,10 @@ export const CanvasViewport = () => {
         node.setPointerCapture(event.pointerId)
         updatePolyline(nextState, worldPoint, { force: true })
       } else if (event.detail >= 2) {
-        if (state.pointerId !== null && node.hasPointerCapture(state.pointerId)) {
+        if (
+          state.pointerId !== null &&
+          node.hasPointerCapture(state.pointerId)
+        ) {
           node.releasePointerCapture(state.pointerId)
         }
         state.pointerId = null
@@ -770,6 +764,9 @@ export const CanvasViewport = () => {
 
   const handlePointerMove: PointerEventHandler<HTMLDivElement> = (event) => {
     const transform = transformState.current
+    if (!transform && snapGuides.length) {
+      setSnapGuides([])
+    }
     if (
       transform &&
       transform.pointerId === event.pointerId &&
@@ -798,7 +795,10 @@ export const CanvasViewport = () => {
             x: worldPoint.x - transform.startWorld.x,
             y: worldPoint.y - transform.startWorld.y,
           }
-          applyTranslation(transform.snapshot, delta, { snap: snapConfig })
+          const result = applyTranslation(transform.snapshot, delta, {
+            snap: snapConfig,
+          })
+          setSnapGuides(result.guides)
         } else if (transform.mode === 'scale') {
           const newBounds = computeScaledBounds(
             transform.handle,
@@ -806,31 +806,35 @@ export const CanvasViewport = () => {
             worldPoint,
             event.shiftKey,
           )
-          const movingEdges: ScaleMovingEdges = createMovingEdges(transform.handle)
-          applyScale(transform.snapshot, newBounds, {
+          const movingEdges: ScaleMovingEdges = createMovingEdges(
+            transform.handle,
+          )
+          const result = applyScale(transform.snapshot, newBounds, {
             snap: { config: snapConfig, moving: movingEdges },
           })
+          setSnapGuides(result.guides)
         } else if (transform.mode === 'rotate') {
           const rawAngle =
             Math.atan2(
               worldPoint.y - transform.center.y,
               worldPoint.x - transform.center.x,
             ) - transform.startAngle
-          let angle = rawAngle
-          if (event.shiftKey) {
-            angle = snapRotationAngle(rawAngle, true)
-          }
           const rotationSnapConfig = {
             ...snapConfig,
             angleStep: ROTATE_SNAP_STEP_RADIANS,
             angleTolerance: ROTATE_SNAP_STEP_RADIANS / 2,
           }
-          const resolvedAngle =
-            rotationSnapConfig.enabled
-              ? calculateRotationSnap(angle, rotationSnapConfig)
-              : angle
-          transform.currentAngle = resolvedAngle
-          applyRotation(transform.snapshot, resolvedAngle, transform.center)
+          const result = applyRotation(
+            transform.snapshot,
+            rawAngle,
+            transform.center,
+            {
+              snap: rotationSnapConfig,
+              shiftSnap: event.shiftKey,
+            },
+          )
+          transform.currentAngle = result.angle
+          setSnapGuides(result.guides)
         }
       }
 
@@ -1037,7 +1041,9 @@ export const CanvasViewport = () => {
             worldPoint,
             event.shiftKey,
           )
-          const movingEdges: ScaleMovingEdges = createMovingEdges(transform.handle)
+          const movingEdges: ScaleMovingEdges = createMovingEdges(
+            transform.handle,
+          )
           applyScale(transform.snapshot, newBounds, {
             snap: { config: snapConfig, moving: movingEdges },
           })
@@ -1053,16 +1059,16 @@ export const CanvasViewport = () => {
             angleStep: ROTATE_SNAP_STEP_RADIANS,
             angleTolerance: ROTATE_SNAP_STEP_RADIANS / 2,
           }
-          let finalAngle = rawAngle
-          if (event.shiftKey) {
-            finalAngle = snapRotationAngle(rawAngle, true)
-          } else if (transform.currentAngle !== undefined) {
-            finalAngle = transform.currentAngle
-          } else if (rotationSnapConfig.enabled) {
-            finalAngle = calculateRotationSnap(rawAngle, rotationSnapConfig)
-          }
-          transform.currentAngle = finalAngle
-          applyRotation(transform.snapshot, finalAngle, transform.center)
+          const rotationResult = applyRotation(
+            transform.snapshot,
+            rawAngle,
+            transform.center,
+            {
+              snap: rotationSnapConfig,
+              shiftSnap: event.shiftKey,
+            },
+          )
+          transform.currentAngle = rotationResult.angle
           store.commit('Rotate selection')
         }
 
@@ -1070,6 +1076,7 @@ export const CanvasViewport = () => {
       }
 
       transformState.current = null
+      setSnapGuides([])
       event.preventDefault()
       return
     }
@@ -1104,6 +1111,7 @@ export const CanvasViewport = () => {
         finalizeRect(state)
       }
 
+      setSnapGuides([])
       event.preventDefault()
       return
     }
@@ -1138,6 +1146,7 @@ export const CanvasViewport = () => {
         finalizeEllipse(state)
       }
 
+      setSnapGuides([])
       event.preventDefault()
       return
     }
@@ -1162,6 +1171,7 @@ export const CanvasViewport = () => {
         commitPolylinePoint(state, worldPoint)
         state.pointerId = null
       }
+      setSnapGuides([])
       event.preventDefault()
       return
     }
@@ -1188,6 +1198,7 @@ export const CanvasViewport = () => {
       }
 
       finalizePath(state)
+      setSnapGuides([])
       event.preventDefault()
       return
     }
@@ -1312,6 +1323,7 @@ export const CanvasViewport = () => {
     pointerState.current.active = false
     pointerState.current.pointerId = null
     document.body.style.cursor = ''
+    setSnapGuides([])
   }
 
   useEffect(() => {
@@ -1365,6 +1377,12 @@ export const CanvasViewport = () => {
     }
   }, [])
 
+  useEffect(() => {
+    if (!settings.snapEnabled) {
+      setSnapGuides([])
+    }
+  }, [settings.snapEnabled])
+
   return (
     <div
       ref={containerRef}
@@ -1376,6 +1394,8 @@ export const CanvasViewport = () => {
       onPointerLeave={handlePointerUp}
     >
       {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
+
+      <GuidesOverlay guides={snapGuides} viewport={viewport} />
 
       <SelectionOverlay
         screenBounds={selectionScreenBounds}
@@ -1425,7 +1445,9 @@ export const CanvasViewport = () => {
           onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
           className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
           aria-pressed={settings.snapEnabled}
-          aria-label={settings.snapEnabled ? 'Disable snapping' : 'Enable snapping'}
+          aria-label={
+            settings.snapEnabled ? 'Disable snapping' : 'Enable snapping'
+          }
         >
           {settings.snapEnabled ? 'Snap on' : 'Snap off'}
         </button>

@@ -16,7 +16,10 @@ const DEFAULT_FONT = {
   size: 20,
 } as const
 
-export const beginText = (point: Vec2, pointerId: number): TextCreationState => {
+export const beginText = (
+  point: Vec2,
+  pointerId: number,
+): TextCreationState => {
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()

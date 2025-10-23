@@ -26,7 +26,14 @@ type TextEditorProps = {
   onCancel: () => void
 }
 
-const TextEditor = ({ shape, bounds, scale, onChange, onCommit, onCancel }: TextEditorProps) => {
+const TextEditor = ({
+  shape,
+  bounds,
+  scale,
+  onChange,
+  onCommit,
+  onCancel,
+}: TextEditorProps) => {
   const [value, setValue] = useState(shape.text)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const committedRef = useRef(false)
@@ -92,11 +99,21 @@ const TextEditor = ({ shape, bounds, scale, onChange, onCommit, onCancel }: Text
       fontWeight: shape.font.weight,
       fontSize: `${shape.font.size * scale}px`,
       letterSpacing:
-        shape.letterSpacing !== undefined ? `${shape.letterSpacing}px` : undefined,
+        shape.letterSpacing !== undefined
+          ? `${shape.letterSpacing}px`
+          : undefined,
       lineHeight: shape.lineHeight ?? undefined,
       textAlign: shape.align ?? 'left',
     }),
-    [scale, shape.align, shape.font.family, shape.font.size, shape.font.weight, shape.letterSpacing, shape.lineHeight],
+    [
+      scale,
+      shape.align,
+      shape.font.family,
+      shape.font.size,
+      shape.font.weight,
+      shape.letterSpacing,
+      shape.lineHeight,
+    ],
   )
 
   return (
@@ -111,7 +128,7 @@ const TextEditor = ({ shape, bounds, scale, onChange, onCommit, onCancel }: Text
     >
       <textarea
         ref={textareaRef}
-        className="pointer-events-auto h-full w-full resize-none rounded border border-(--color-elevated-border) bg-(--color-input-bg)/90 p-2 text-(--color-app-foreground) shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+        className="pointer-events-auto h-full w-full resize-none rounded border border-(--color-elevated-border) bg-(--color-input-bg)/90 p-2 text-(--color-app-foreground) shadow-sm backdrop-blur focus:ring-2 focus:ring-(--color-accent) focus:outline-none"
         style={styles}
         value={value}
         onChange={handleChange}
