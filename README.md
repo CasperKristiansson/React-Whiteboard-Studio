@@ -1,3 +1,5 @@
+![React Whiteboard Studio primary canvas](docs/images/primary.jpg)
+
 # React Whiteboard Studio
 
 A polished whiteboard experience built to showcase modern front-end engineering craft. Draw blends a high-touch canvas interaction model with a thoughtful state architecture, local persistence, and a curated design system.
@@ -20,6 +22,12 @@ A polished whiteboard experience built to showcase modern front-end engineering 
 - **Canvas + Custom Controllers** for pointer-first drawing interactions, including snapping and measurement utilities.
 
 ## Functional Tour
+
+<img src="docs/images/illustration.jpg" alt="Whiteboard tooling illustration" align="right" width="320">
+
+Navigate a responsive canvas that marries precision controls with fluid interactions. Tooling stays within reach whether you're sketching a quick storyboard, annotating feedback, or building a polished product diagram.
+
+Compose ideas through layered objects, collaborative annotations, and export-ready assets without leaving the keyboard-driven workflow that keeps momentum high.
 
 - **Toolbar & Context Panel** — Tool switching, typography sliders, alignment controls, and contextual property editing with live commits.
 - **Selection & Transform** — Bounding boxes, marquee selection, Figma-style handles, rotation snap (15°), and z-index management.
