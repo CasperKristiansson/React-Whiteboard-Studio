@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 import clsx from 'clsx'
 import {
   LuCheck,
@@ -86,7 +93,6 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
   const {
     projects,
     currentProjectId,
-    loading,
     error,
     create,
     rename,
@@ -101,6 +107,7 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
   const [renameValue, setRenameValue] = useState('')
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null)
   const [deleteProjectName, setDeleteProjectName] = useState('')
+  const [newProjectName, setNewProjectName] = useState('')
   const renameInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -111,6 +118,7 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
       setRenameValue('')
       setDeleteProjectId(null)
       setDeleteProjectName('')
+      setNewProjectName('')
     }
   }, [isOpen])
 
@@ -129,15 +137,18 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
     }
   }, [renameProjectId])
 
-  const handleCreate = useCallback(async () => {
-    const name = window.prompt('Create new project', 'Untitled project')
-    if (!name) return
-    const trimmed = name.trim()
-    if (!trimmed) return
-    await create(trimmed)
-    setStatus('Project created')
-    setOpenProjectId(null)
-  }, [create])
+  const handleCreateSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      const trimmed = newProjectName.trim()
+      if (!trimmed) return
+      await create(trimmed)
+      setNewProjectName('')
+      setStatus('Project created')
+      setOpenProjectId(null)
+    },
+    [create, newProjectName, setOpenProjectId],
+  )
 
   const handleProjectClick = useCallback(
     async (projectId: string) => {
@@ -232,20 +243,32 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-(--color-button-border) bg-(--color-button-bg) px-3 py-2 text-sm font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-        onClick={handleCreate}
+      <form
+        onSubmit={handleCreateSubmit}
+        className="grid gap-2 rounded-xl border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/85 px-3 py-3 shadow-sm"
       >
-        <LuPlus className="h-4 w-4" />
-        New project
-      </button>
+        <label className="flex flex-col gap-1 text-left text-(--color-app-foreground)">
+          <span className="text-xs font-semibold uppercase tracking-wide text-(--color-muted-foreground)">
+            New project
+          </span>
+          <input
+            type="text"
+            value={newProjectName}
+            onChange={(event) => setNewProjectName(event.target.value)}
+            placeholder="Project name"
+            className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1.5 text-sm text-(--color-app-foreground) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          />
+        </label>
+        <button
+          type="submit"
+          className="inline-flex items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-2 text-sm font-medium text-(--color-button-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={!newProjectName.trim()}
+        >
+          <LuPlus className="h-4 w-4" />
+          Create
+        </button>
+      </form>
 
-      {loading ? (
-        <p className="text-xs text-(--color-muted-foreground)">
-          Loading projects…
-        </p>
-      ) : null}
       {error ? <p className="text-xs text-red-500">{error}</p> : null}
       {status && status !== 'Project loaded' ? (
         <p className="text-xs text-green-500">{status}</p>

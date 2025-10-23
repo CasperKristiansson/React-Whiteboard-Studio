@@ -38,7 +38,7 @@ export const useProjects = () => {
           replaceDocument(doc)
           markClean()
         }
-        const projectName = meta?.name ?? projects.find((project) => project.id === id)?.name ?? null
+        const projectName = meta?.name ?? null
         setProjectId(id, projectName)
         setCurrentProjectId(id)
       } catch (err) {
@@ -54,7 +54,7 @@ export const useProjects = () => {
         setLoading(false)
       }
     },
-    [dirty, markClean, projects, pushError, replaceDocument, setProjectId],
+    [dirty, markClean, pushError, replaceDocument, setProjectId],
   )
 
   useEffect(() => {
