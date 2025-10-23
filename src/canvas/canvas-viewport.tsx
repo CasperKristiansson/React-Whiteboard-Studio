@@ -75,6 +75,14 @@ import {
 
 const PAN_COMMIT_DELAY = 120;
 const MIN_SCALE_SIZE = 4;
+const ROTATE_SNAP_STEP_DEGREES = 15;
+const ROTATE_SNAP_STEP_RADIANS = (Math.PI / 180) * ROTATE_SNAP_STEP_DEGREES;
+
+const snapRotationAngle = (angle: number, shouldSnap: boolean) =>
+  shouldSnap
+    ? Math.round(angle / ROTATE_SNAP_STEP_RADIANS) *
+      ROTATE_SNAP_STEP_RADIANS
+    : angle;
 
 type MoveTransformState = {
   mode: "move";
@@ -99,6 +107,7 @@ type RotateTransformState = {
   originalBounds: ShapeBounds;
   center: Vec2;
   startAngle: number;
+  currentAngle: number;
 };
 
 type TransformState =
@@ -381,6 +390,7 @@ export const CanvasViewport = () => {
         originalBounds: snapshot.selectionBounds,
         center,
         startAngle,
+        currentAngle: 0,
       };
 
       node.setPointerCapture(event.pointerId);
@@ -659,12 +669,14 @@ export const CanvasViewport = () => {
           );
           applyScale(transform.snapshot, newBounds);
         } else if (transform.mode === "rotate") {
-          const angle =
+          const rawAngle =
             Math.atan2(
               worldPoint.y - transform.center.y,
               worldPoint.x - transform.center.x
             ) - transform.startAngle;
-          applyRotation(transform.snapshot, angle, transform.center);
+          const snapped = snapRotationAngle(rawAngle, event.shiftKey);
+          transform.currentAngle = snapped;
+          applyRotation(transform.snapshot, snapped, transform.center);
         }
       }
 
@@ -742,7 +754,7 @@ export const CanvasViewport = () => {
           screenPoint,
           useAppStore.getState().viewport
         );
-        updatePath(state, worldPoint);
+        updatePath(state, worldPoint, { force: true });
         event.preventDefault();
         return;
       }
@@ -991,7 +1003,7 @@ export const CanvasViewport = () => {
           },
           useAppStore.getState().viewport
         );
-        updatePath(state, worldPoint);
+        updatePath(state, worldPoint, { force: true });
       }
 
       finalizePath(state);

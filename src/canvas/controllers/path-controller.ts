@@ -10,16 +10,18 @@ export type PathState = {
   createdAt: number
   zIndex: number
   committed: boolean
+  smoothingEpsilon: number
 }
 
 const DEFAULT_STROKE = { r: 15, g: 23, b: 42, a: 1 }
 const SAMPLE_DISTANCE = 1.5
-const SMOOTHING_EPSILON = 1.2
+const DEFAULT_SMOOTHING_EPSILON = 1.2
 
 export const beginPath = (point: Vec2, pointerId: number): PathState => {
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()
+  const smoothingEpsilon = store.settings.pathSmoothingEpsilon ?? DEFAULT_SMOOTHING_EPSILON
 
   store.addShape({
     id,
@@ -42,17 +44,35 @@ export const beginPath = (point: Vec2, pointerId: number): PathState => {
     createdAt: timestamp,
     zIndex: timestamp,
     committed: false,
+    smoothingEpsilon,
   }
 }
 
-const shouldSample = (current: Vec2, next: Vec2) =>
-  Math.hypot(next.x - current.x, next.y - current.y) >= SAMPLE_DISTANCE
+type UpdateOptions = {
+  force?: boolean
+}
 
-export const updatePath = (state: PathState, point: Vec2) => {
-  const last = state.points[state.points.length - 1]
-  if (!shouldSample(last, point)) return
+const distanceBetween = (a: Vec2, b: Vec2) => Math.hypot(b.x - a.x, b.y - a.y)
 
-  state.points.push(point)
+export const updatePath = (state: PathState, point: Vec2, options?: UpdateOptions) => {
+  const { force = false } = options ?? {}
+  const lastIndex = state.points.length - 1
+  const last = state.points[lastIndex]
+  const distance = distanceBetween(last, point)
+
+  if (distance < SAMPLE_DISTANCE) {
+    if (!force || distance === 0) {
+      return
+    }
+
+    if (state.points.length === 1) {
+      state.points.push(point)
+    } else {
+      state.points[lastIndex] = point
+    }
+  } else {
+    state.points.push(point)
+  }
 
   const store = useAppStore.getState()
   const relativePoints = state.points.map((p) => ({
@@ -78,7 +98,11 @@ export const finalizePath = (state: PathState) => {
   if (state.committed) return
 
   const store = useAppStore.getState()
-  const simplified = ramerDouglasPeucker(state.points, SMOOTHING_EPSILON)
+  const epsilon =
+    Number.isFinite(state.smoothingEpsilon) && state.smoothingEpsilon > 0
+      ? state.smoothingEpsilon
+      : DEFAULT_SMOOTHING_EPSILON
+  const simplified = ramerDouglasPeucker(state.points, epsilon)
   state.points = simplified
 
   const relativePoints = simplified.map((p) => ({

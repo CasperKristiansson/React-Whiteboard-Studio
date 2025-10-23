@@ -65,6 +65,42 @@ export const useKeyboardShortcuts = () => {
       }
 
       if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+        if (key === ']') {
+          event.preventDefault()
+          if (event.shiftKey) {
+            store.bringSelectionToFront()
+            const updated = useAppStore.getState()
+            if (updated.history.pending) {
+              updated.commit('Bring to front')
+            }
+          } else {
+            store.bringSelectionForward()
+            const updated = useAppStore.getState()
+            if (updated.history.pending) {
+              updated.commit('Bring forward')
+            }
+          }
+          return
+        }
+
+        if (key === '[') {
+          event.preventDefault()
+          if (event.shiftKey) {
+            store.sendSelectionToBack()
+            const updated = useAppStore.getState()
+            if (updated.history.pending) {
+              updated.commit('Send to back')
+            }
+          } else {
+            store.sendSelectionBackward()
+            const updated = useAppStore.getState()
+            if (updated.history.pending) {
+              updated.commit('Send backward')
+            }
+          }
+          return
+        }
+
         if (event.key === 'Delete' || event.key === 'Backspace') {
           const selected = store.selection
           if (selected.length) {

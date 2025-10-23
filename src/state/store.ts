@@ -38,6 +38,7 @@ export type Tool =
 export type UiSettings = {
   gridVisible: boolean
   snapEnabled: boolean
+  pathSmoothingEpsilon: number
 }
 
 export type AppState = {
@@ -76,6 +77,10 @@ export type AppActions = {
   undo: () => void
   redo: () => void
   duplicateSelection: () => void
+  bringSelectionForward: () => void
+  sendSelectionBackward: () => void
+  bringSelectionToFront: () => void
+  sendSelectionToBack: () => void
 }
 
 export type AppStore = AppState & AppActions
@@ -126,6 +131,7 @@ const initialState: AppState = {
   settings: {
     gridVisible: true,
     snapEnabled: false,
+    pathSmoothingEpsilon: 1.2,
   },
   theme: 'system',
   dirty: false,
@@ -155,6 +161,32 @@ const captureHistorySnapshot = (state: AppState) => {
   if (state.history.future.length) {
     state.history.future = []
   }
+}
+
+const reorderSelection = (
+  state: AppState,
+  mutate: (sorted: Shape[], selected: Set<UUID>) => boolean,
+) => {
+  if (!state.selection.length) return false
+
+  const selected = new Set(state.selection)
+  const sorted = [...state.document.shapes].sort((a, b) => a.zIndex - b.zIndex)
+  const changed = mutate(sorted, selected)
+  if (!changed) return false
+
+  captureHistorySnapshot(state)
+
+  sorted.forEach((shape, index) => {
+    const nextZ = index + 1
+    if (shape.zIndex !== nextZ) {
+      shape.zIndex = nextZ
+      shape.updatedAt = now()
+    }
+  })
+
+  state.document.shapes = sorted
+  state.dirty = true
+  return true
 }
 
 export const useAppStore = create<AppStore>()(
@@ -334,6 +366,103 @@ export const useAppStore = create<AppStore>()(
         state.document.shapes.push(...clones)
         state.selection = clones.map((shape) => shape.id)
         state.dirty = true
+      })
+    },
+
+    bringSelectionForward: () => {
+      set((state) => {
+        reorderSelection(state, (sorted, selected) => {
+          let changed = false
+          for (let index = sorted.length - 2; index >= 0; index -= 1) {
+            const current = sorted[index]
+            if (!selected.has(current.id)) continue
+            const next = sorted[index + 1]
+            if (!next || selected.has(next.id)) continue
+            sorted[index] = next
+            sorted[index + 1] = current
+            changed = true
+          }
+          return changed
+        })
+      })
+    },
+
+    sendSelectionBackward: () => {
+      set((state) => {
+        reorderSelection(state, (sorted, selected) => {
+          let changed = false
+          for (let index = 1; index < sorted.length; index += 1) {
+            const current = sorted[index]
+            if (!selected.has(current.id)) continue
+            const previous = sorted[index - 1]
+            if (!previous || selected.has(previous.id)) continue
+            sorted[index] = previous
+            sorted[index - 1] = current
+            changed = true
+          }
+          return changed
+        })
+      })
+    },
+
+    bringSelectionToFront: () => {
+      set((state) => {
+        reorderSelection(state, (sorted, selected) => {
+          const selectedShapes = sorted.filter((shape) => selected.has(shape.id))
+          if (!selectedShapes.length || selectedShapes.length === sorted.length) {
+            return false
+          }
+          const unselectedShapes = sorted.filter((shape) => !selected.has(shape.id))
+          if (!unselectedShapes.length) {
+            return false
+          }
+
+          let changed = false
+          for (let index = 0; index < selectedShapes.length; index += 1) {
+            const source = selectedShapes[index]
+            const destination = sorted[sorted.length - selectedShapes.length + index]
+            if (source.id !== destination.id) {
+              changed = true
+              break
+            }
+          }
+
+          if (!changed) return false
+
+          sorted.length = 0
+          sorted.push(...unselectedShapes, ...selectedShapes)
+          return true
+        })
+      })
+    },
+
+    sendSelectionToBack: () => {
+      set((state) => {
+        reorderSelection(state, (sorted, selected) => {
+          const selectedShapes = sorted.filter((shape) => selected.has(shape.id))
+          if (!selectedShapes.length || selectedShapes.length === sorted.length) {
+            return false
+          }
+          const unselectedShapes = sorted.filter((shape) => !selected.has(shape.id))
+          if (!unselectedShapes.length) {
+            return false
+          }
+
+          let changed = false
+          for (let index = 0; index < selectedShapes.length; index += 1) {
+            const destination = sorted[index]
+            if (destination.id !== selectedShapes[index].id) {
+              changed = true
+              break
+            }
+          }
+
+          if (!changed) return false
+
+          sorted.length = 0
+          sorted.push(...selectedShapes, ...unselectedShapes)
+          return true
+        })
       })
     },
 
