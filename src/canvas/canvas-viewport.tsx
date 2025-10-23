@@ -79,6 +79,7 @@ import {
   type TextCreationState,
 } from './controllers/text-controller'
 import TextEditor from '../ui/text-editor'
+import { updateTextShapeBounds } from '../utils/text-measure'
 
 const PAN_COMMIT_DELAY = 120
 const MIN_SCALE_SIZE = 4
@@ -370,6 +371,7 @@ export const CanvasViewport = () => {
       updateShape(editingTextShape.id, (shape) => {
         if (shape.type === 'text') {
           shape.text = value
+          updateTextShapeBounds(shape)
         }
       })
     },

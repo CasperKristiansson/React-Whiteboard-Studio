@@ -1,6 +1,7 @@
 import type { Vec2 } from '../../types'
 import { DEFAULT_FILL, DEFAULT_STROKE } from '../../types/shapes'
 import { createShapeId, useAppStore } from '../../state/store'
+import { updateTextShapeBounds } from '../../utils/text-measure'
 
 export type TextCreationState = {
   id: string
@@ -75,7 +76,7 @@ export const finalizeText = (id: string, label = 'Insert text') => {
     return
   }
 
+  updateTextShapeBounds(shape)
   store.select([id], 'set')
   store.commit(label)
 }
-

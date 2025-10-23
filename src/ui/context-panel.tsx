@@ -14,6 +14,10 @@ import type {
   Shape,
   TextShape,
 } from '../types'
+import {
+  DEFAULT_TEXT_SHADOW,
+  updateTextShapeBounds,
+} from '../utils/text-measure'
 
 const toHex = (value: number) => {
   const clamped = Math.min(255, Math.max(0, Math.round(value)))
@@ -205,6 +209,52 @@ const ContextPanel = () => {
     return value ?? false
   }, [textShapes, allText])
 
+  const shadowsEqual = useCallback((a: TextShape['shadow'] | null, b: TextShape['shadow'] | null) => {
+    if (a === b) return true
+    if (!a || !b) return false
+    return (
+      a.offset.x === b.offset.x &&
+      a.offset.y === b.offset.y &&
+      a.blur === b.blur &&
+      a.color.r === b.color.r &&
+      a.color.g === b.color.g &&
+      a.color.b === b.color.b &&
+      a.color.a === b.color.a
+    )
+  }, [])
+
+  const shadowState = useMemo(() => {
+    if (!allText || !textShapes.length) {
+      return { shadow: null as TextShape['shadow'] | null, mixed: false }
+    }
+    const firstShadow = textShapes[0].shadow ?? null
+    for (let index = 1; index < textShapes.length; index += 1) {
+      const current = textShapes[index].shadow ?? null
+      if (!shadowsEqual(firstShadow, current)) {
+        return { shadow: null, mixed: true }
+      }
+    }
+    return { shadow: firstShadow, mixed: false }
+  }, [allText, shadowsEqual, textShapes])
+
+  const shadowEnabled = shadowState.shadow !== null
+  const shadowMixed = shadowState.mixed
+  const shadowColorHex = shadowState.shadow
+    ? rgbaToHex(shadowState.shadow.color)
+    : rgbaToHex(DEFAULT_TEXT_SHADOW.color)
+  const shadowOpacityValue = shadowState.shadow
+    ? shadowState.shadow.color.a
+    : DEFAULT_TEXT_SHADOW.color.a
+  const shadowOffsetXValue = shadowState.shadow
+    ? shadowState.shadow.offset.x
+    : DEFAULT_TEXT_SHADOW.offset.x
+  const shadowOffsetYValue = shadowState.shadow
+    ? shadowState.shadow.offset.y
+    : DEFAULT_TEXT_SHADOW.offset.y
+  const shadowBlurValue = shadowState.shadow
+    ? shadowState.shadow.blur
+    : DEFAULT_TEXT_SHADOW.blur
+
   const applyChange = useCallback(
     (label: string, updater: (shape: Shape) => void) => {
       selectionIds.forEach((id) => {
@@ -267,6 +317,7 @@ const ContextPanel = () => {
       applyChange('Change font family', (shape) => {
         if (isTextShape(shape)) {
           shape.font.family = value || shape.font.family
+          updateTextShapeBounds(shape)
         }
       })
     },
@@ -281,6 +332,7 @@ const ContextPanel = () => {
       applyChange('Change font size', (shape) => {
         if (isTextShape(shape)) {
           shape.font.size = next
+          updateTextShapeBounds(shape)
         }
       })
     },
@@ -295,6 +347,7 @@ const ContextPanel = () => {
       applyChange('Change font weight', (shape) => {
         if (isTextShape(shape)) {
           shape.font.weight = next
+          updateTextShapeBounds(shape)
         }
       })
     },
@@ -320,6 +373,7 @@ const ContextPanel = () => {
       applyChange('Change letter spacing', (shape) => {
         if (isTextShape(shape)) {
           shape.letterSpacing = value
+          updateTextShapeBounds(shape)
         }
       })
     },
@@ -334,6 +388,7 @@ const ContextPanel = () => {
       applyChange('Change line height', (shape) => {
         if (isTextShape(shape)) {
           shape.lineHeight = next
+          updateTextShapeBounds(shape)
         }
       })
     },
@@ -346,6 +401,7 @@ const ContextPanel = () => {
       applyChange('Toggle italic', (shape) => {
         if (isTextShape(shape)) {
           shape.italic = checked
+          updateTextShapeBounds(shape)
         }
       })
     },
@@ -358,6 +414,101 @@ const ContextPanel = () => {
       applyChange('Toggle underline', (shape) => {
         if (isTextShape(shape)) {
           shape.underline = checked
+        }
+      })
+    },
+    [applyChange],
+  )
+
+  const handleShadowToggle = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const enabled = event.target.checked
+      applyChange(enabled ? 'Enable text shadow' : 'Disable text shadow', (shape) => {
+        if (!isTextShape(shape)) return
+        if (enabled) {
+          const existing = shape.shadow ?? {
+            offset: { ...DEFAULT_TEXT_SHADOW.offset },
+            blur: DEFAULT_TEXT_SHADOW.blur,
+            color: { ...DEFAULT_TEXT_SHADOW.color },
+          }
+          shape.shadow = {
+            offset: { ...existing.offset },
+            blur: existing.blur,
+            color: { ...existing.color },
+          }
+        } else {
+          shape.shadow = undefined
+        }
+      })
+    },
+    [applyChange],
+  )
+
+  const handleShadowColorChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const next = hexToRgba(event.target.value, DEFAULT_TEXT_SHADOW.color)
+      applyChange('Change text shadow color', (shape) => {
+        if (!isTextShape(shape)) return
+        const shadow = shape.shadow ?? {
+          offset: { ...DEFAULT_TEXT_SHADOW.offset },
+          blur: DEFAULT_TEXT_SHADOW.blur,
+          color: { ...DEFAULT_TEXT_SHADOW.color },
+        }
+        shape.shadow = {
+          offset: { ...shadow.offset },
+          blur: shadow.blur,
+          color: { ...shadow.color, r: next.r, g: next.g, b: next.b },
+        }
+      })
+    },
+    [applyChange],
+  )
+
+  const handleShadowOpacityChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const value = Number.parseFloat(event.target.value)
+      if (Number.isNaN(value)) return
+      const next = Math.min(1, Math.max(0, value))
+      applyChange('Change text shadow opacity', (shape) => {
+        if (!isTextShape(shape) || !shape.shadow) return
+        shape.shadow = {
+          ...shape.shadow,
+          color: { ...shape.shadow.color, a: next },
+        }
+      })
+    },
+    [applyChange],
+  )
+
+  const handleShadowOffsetChange = useCallback(
+    (axis: 'x' | 'y') =>
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const value = Number.parseFloat(event.target.value)
+        if (Number.isNaN(value)) return
+        applyChange('Change text shadow offset', (shape) => {
+          if (!isTextShape(shape) || !shape.shadow) return
+          shape.shadow = {
+            ...shape.shadow,
+            offset: {
+              ...shape.shadow.offset,
+              [axis]: value,
+            },
+          }
+        })
+      },
+    [applyChange],
+  )
+
+  const handleShadowBlurChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const value = Number.parseFloat(event.target.value)
+      if (Number.isNaN(value)) return
+      const next = Math.max(0, value)
+      applyChange('Change text shadow blur', (shape) => {
+        if (!isTextShape(shape) || !shape.shadow) return
+        shape.shadow = {
+          ...shape.shadow,
+          blur: next,
         }
       })
     },
@@ -577,6 +728,114 @@ const ContextPanel = () => {
                     {formatMixedLabel('Underline', underlineMixed)}
                   </span>
                 </label>
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-(--color-elevated-border)/60 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold tracking-wide text-(--color-muted-foreground)">
+                    {shadowMixed ? 'Shadow (mixed)' : 'Shadow'}
+                  </span>
+                  <label className="flex items-center gap-2">
+                    <input
+                      aria-label="Toggle text shadow"
+                      type="checkbox"
+                      checked={shadowEnabled}
+                      onChange={handleShadowToggle}
+                    />
+                    <span className="text-xs text-(--color-muted-foreground)">Enabled</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-(--color-muted-foreground)">
+                      Color
+                    </span>
+                    <input
+                      aria-label="Shadow color"
+                      className="h-8 w-full cursor-pointer rounded border border-(--color-elevated-border) bg-transparent"
+                      type="color"
+                      value={shadowColorHex}
+                      onChange={handleShadowColorChange}
+                      disabled={!shadowEnabled || shadowMixed}
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-(--color-muted-foreground)">
+                      Opacity
+                    </span>
+                    <input
+                      aria-label="Shadow opacity"
+                      className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={
+                        shadowEnabled && !shadowMixed ? shadowOpacityValue.toFixed(2) : ''
+                      }
+                      placeholder={shadowMixed ? 'Mixed' : undefined}
+                      onChange={handleShadowOpacityChange}
+                      disabled={!shadowEnabled}
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-(--color-muted-foreground)">
+                      Offset X
+                    </span>
+                    <input
+                      aria-label="Shadow offset X"
+                      className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
+                      type="number"
+                      step="1"
+                      value={
+                        shadowEnabled && !shadowMixed ? shadowOffsetXValue : ''
+                      }
+                      placeholder={shadowMixed ? 'Mixed' : undefined}
+                      onChange={handleShadowOffsetChange('x')}
+                      disabled={!shadowEnabled}
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-(--color-muted-foreground)">
+                      Offset Y
+                    </span>
+                    <input
+                      aria-label="Shadow offset Y"
+                      className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
+                      type="number"
+                      step="1"
+                      value={
+                        shadowEnabled && !shadowMixed ? shadowOffsetYValue : ''
+                      }
+                      placeholder={shadowMixed ? 'Mixed' : undefined}
+                      onChange={handleShadowOffsetChange('y')}
+                      disabled={!shadowEnabled}
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-(--color-muted-foreground)">
+                      Blur
+                    </span>
+                    <input
+                      aria-label="Shadow blur"
+                      className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={
+                        shadowEnabled && !shadowMixed ? shadowBlurValue : ''
+                      }
+                      placeholder={shadowMixed ? 'Mixed' : undefined}
+                      onChange={handleShadowBlurChange}
+                      disabled={!shadowEnabled}
+                    />
+                  </label>
+                </div>
               </div>
             </section>
           ) : null}
