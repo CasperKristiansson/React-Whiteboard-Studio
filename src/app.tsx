@@ -9,6 +9,7 @@ import AssetManager from './ui/asset-manager'
 import ExportDialog from './ui/export-dialog'
 import ImportDialog from './ui/import-dialog'
 import ProjectManager from './ui/project-manager'
+import DebugOverlay from './dev/debug-overlay'
 import {
   selectActiveTool,
   selectTheme,
@@ -30,6 +31,9 @@ function App() {
 
   useKeyboardShortcuts()
   usePersistence()
+
+  const debugEnabled =
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -78,8 +82,9 @@ function App() {
   }, [theme])
 
   return (
-    <main className="min-h-screen bg-(--color-app-bg) text-(--color-app-foreground) transition-colors">
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-6 py-12">
+    <>
+      <main className="min-h-screen bg-(--color-app-bg) text-(--color-app-foreground) transition-colors">
+        <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-6 py-12">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex max-w-2xl flex-col gap-3">
             <h1 className="text-4xl font-semibold sm:text-5xl">
@@ -126,7 +131,9 @@ function App() {
           <ImportDialog />
         </div>
       </div>
-    </main>
+      </main>
+      <DebugOverlay enabled={debugEnabled} />
+    </>
   )
 }
 

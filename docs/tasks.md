@@ -202,7 +202,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-text-16
   - Estimate: 30
 
-- [ ] T-observe-29: Perf marks + optional debug overlay (60m)
+- [x] T-observe-29: Perf marks + optional debug overlay (60m)
   - Goal: `performance.mark/measure` around draw/hit/export; optional dev overlay (FPS, dirty rects, snap hits).
   - Files/paths: `src/dev/perf.ts`, `src/dev/DebugOverlay.tsx`, `src/app/AppShell.tsx`
   - Key edits: Gated by query/localStorage flag `debug`.

@@ -87,6 +87,7 @@ import {
 } from './controllers/text-controller'
 import TextEditor from '../ui/text-editor'
 import { updateTextShapeBounds } from '../utils/text-measure'
+import { mark } from '../dev/perf'
 
 const PAN_COMMIT_DELAY = 120
 const MIN_SCALE_SIZE = 4
@@ -271,6 +272,7 @@ const initialPointerState: PointerState = {
 }
 
 export const CanvasViewport = () => {
+  mark('canvas-viewport-render')
   const activeTool = useAppSelector(selectActiveTool)
   const viewport = useAppSelector(selectViewport)
   const settings = useAppSelector(selectSettings)
