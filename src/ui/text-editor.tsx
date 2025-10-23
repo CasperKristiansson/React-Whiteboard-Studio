@@ -11,6 +11,7 @@ import {
 } from 'react'
 
 import type { TextShape } from '../types'
+import { sanitizePlainText } from '../security/sanitize'
 
 type TextEditorProps = {
   shape: TextShape
@@ -71,8 +72,9 @@ const TextEditor = ({
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       const next = event.target.value
-      setValue(next)
-      onChange(next)
+      const sanitized = sanitizePlainText(next)
+      setValue(sanitized)
+      onChange(sanitized)
     },
     [onChange],
   )

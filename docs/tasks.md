@@ -167,7 +167,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-select-08, T-text-style-17
   - Estimate: 90
 
-- [ ] T-import-24: Import .wb.json (60m)
+- [x] T-import-24: Import .wb.json (60m)
   - Goal: Parse export; restore document/assets; validation and errors.
   - Files/paths: `src/import/json.ts`, `src/ui/ImportDialog.tsx`
   - Key edits: Deserializer, asset storage, error handling.
@@ -188,14 +188,14 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-persist-25
   - Estimate: 45
 
-- [ ] T-projects-27: ProjectManager UI (CRUD + pin recent) (90m)
+- [x] T-projects-27: ProjectManager UI (CRUD + pin recent) (90m)
   - Goal: List, create, rename, duplicate, delete; open last document.
   - Files/paths: `src/ui/ProjectManager.tsx`, `src/persistence/adapter.ts`
   - Key edits: CRUD flows, pinned list, guarded route/view.
   - Dependencies: T-persist-25, T-persist-26
   - Estimate: 90
 
-- [ ] T-security-28: Sanitize pasted/typed text (30m)
+- [x] T-security-28: Sanitize pasted/typed text (30m)
   - Goal: Strip scripts/unsafe HTML; ensure plain text + style.
   - Files/paths: `src/security/sanitize.ts`, `src/ui/TextEditor.tsx`
   - Key edits: Sanitizer utility; integrate in editor/paste path.

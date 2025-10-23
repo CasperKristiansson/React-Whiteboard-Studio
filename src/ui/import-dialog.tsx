@@ -1,0 +1,91 @@
+import { useCallback, useState, useRef, type ChangeEvent } from 'react'
+
+import { importProjectFromJson } from '../import/json'
+import {
+  selectProjectId,
+  useAppSelector,
+  useAppStore,
+} from '../state/store'
+
+const ImportDialog = () => {
+  const projectId = useAppSelector(selectProjectId)
+  const replaceDocument = useAppStore((state) => state.replaceDocument)
+  const markClean = useAppStore((state) => state.markClean)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const [isImporting, setImporting] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleTrigger = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      if (!projectId) {
+        setError('No project loaded.')
+        return
+      }
+
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      setImporting(true)
+      setMessage(null)
+      setError(null)
+
+      try {
+        const document = await importProjectFromJson(projectId, file)
+        replaceDocument(document)
+        markClean()
+        setMessage('Import successful')
+      } catch (err) {
+        console.error('Import failed', err)
+        setError('Failed to import file. Make sure it was exported from this app.')
+      } finally {
+        setImporting(false)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+      }
+    },
+    [markClean, projectId, replaceDocument],
+  )
+
+  return (
+    <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
+      <header className="mb-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-(--color-app-foreground)">Import</h2>
+          <p className="text-xs text-(--color-muted-foreground)">
+            Restore a project from a `.wb.json` export.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleTrigger}
+          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          disabled={!projectId || isImporting}
+        >
+          {isImporting ? 'Importing…' : 'Import .wb.json'}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          hidden
+          onChange={handleFileChange}
+        />
+      </header>
+
+      {message ? (
+        <p className="text-xs text-green-500">{message}</p>
+      ) : null}
+      {error ? <p className="text-xs text-red-500">{error}</p> : null}
+    </section>
+  )
+}
+
+export default ImportDialog
+
