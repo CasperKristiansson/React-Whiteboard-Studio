@@ -233,7 +233,9 @@ const AssetManager = ({ variant = 'default' }: { variant?: AssetManagerVariant }
       </header>
 
       {!projectId ? (
-        <p className="text-xs text-(--color-muted-foreground)">Loading project…</p>
+        <p className="text-xs text-(--color-muted-foreground)">
+          Create or select a project to manage assets.
+        </p>
       ) : sortedAssets.length === 0 ? (
         <p className="text-xs text-(--color-muted-foreground)">
           No assets yet. Import images to reuse them on the canvas.

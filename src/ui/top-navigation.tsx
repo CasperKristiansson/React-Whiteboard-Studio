@@ -99,11 +99,20 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
 
   const [openProjectId, setOpenProjectId] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
+  const [renameProjectId, setRenameProjectId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null)
+  const [deleteProjectName, setDeleteProjectName] = useState('')
+  const renameInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!isOpen) {
       setOpenProjectId(null)
       setStatus(null)
+      setRenameProjectId(null)
+      setRenameValue('')
+      setDeleteProjectId(null)
+      setDeleteProjectName('')
     }
   }, [isOpen])
 
@@ -112,6 +121,12 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
       setOpenProjectId(null)
     }
   }, [openProjectId, projects])
+
+  useEffect(() => {
+    if (renameProjectId) {
+      renameInputRef.current?.focus()
+    }
+  }, [renameProjectId])
 
   const handleCreate = useCallback(async () => {
     const name = window.prompt('Create new project', 'Untitled project')
@@ -128,42 +143,84 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
       await selectProject(projectId)
       setOpenProjectId((current) => (current === projectId ? null : projectId))
       setStatus('Project loaded')
+      setRenameProjectId(null)
+      setRenameValue('')
+      setDeleteProjectId(null)
+      setDeleteProjectName('')
     },
     [selectProject],
   )
 
-  const handleRename = useCallback(
-    async (projectId: string, currentName: string) => {
-      const next = window.prompt('Rename project', currentName)
-      if (!next) return
-      const trimmed = next.trim()
-      if (!trimmed || trimmed === currentName) return
-      await rename(projectId, trimmed)
-      setStatus('Project renamed')
-      setOpenProjectId(null)
-    },
-    [rename],
-  )
+  const handleRenameStart = useCallback((projectId: string, currentName: string) => {
+    setRenameProjectId(projectId)
+    setRenameValue(currentName)
+    setStatus(null)
+    setDeleteProjectId(null)
+    setDeleteProjectName('')
+  }, [])
+
+  const handleRenameCancel = useCallback(() => {
+    setRenameProjectId(null)
+    setRenameValue('')
+  }, [])
+
+  const handleRenameSubmit = useCallback(async () => {
+    if (!renameProjectId) return
+    const trimmed = renameValue.trim()
+    if (!trimmed) {
+      setStatus('Name cannot be empty')
+      return
+    }
+
+    const target = projects.find((project) => project.id === renameProjectId)
+    if (target && target.name === trimmed) {
+      setStatus('Name unchanged')
+      setRenameProjectId(null)
+      return
+    }
+
+    await rename(renameProjectId, trimmed)
+    setStatus('Project renamed')
+    setRenameProjectId(null)
+    setRenameValue('')
+  }, [projects, rename, renameProjectId, renameValue])
 
   const handleDuplicate = useCallback(
     async (projectId: string) => {
       await duplicate(projectId)
       setStatus('Project duplicated')
       setOpenProjectId(null)
+      setRenameProjectId(null)
+      setRenameValue('')
+      setDeleteProjectId(null)
+      setDeleteProjectName('')
     },
     [duplicate],
   )
 
-  const handleDelete = useCallback(
-    async (projectId: string, projectName: string) => {
-      const confirmed = window.confirm(`Delete project “${projectName}” and its assets?`)
-      if (!confirmed) return
-      await remove(projectId)
-      setStatus('Project deleted')
-      setOpenProjectId(null)
-    },
-    [remove],
-  )
+  const handleDeleteRequest = useCallback((projectId: string, projectName: string) => {
+    setDeleteProjectId(projectId)
+    setDeleteProjectName(projectName)
+    setRenameProjectId(null)
+    setRenameValue('')
+    setStatus(null)
+  }, [])
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteProjectId(null)
+    setDeleteProjectName('')
+  }, [])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteProjectId) return
+    await remove(deleteProjectId)
+    setStatus('Project deleted')
+    setDeleteProjectId(null)
+    setDeleteProjectName('')
+    setOpenProjectId(null)
+    setRenameProjectId(null)
+    setRenameValue('')
+  }, [deleteProjectId, remove])
 
   return (
     <div className="flex flex-col gap-3">
@@ -215,29 +272,90 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
 
                 {isOpen ? (
                   <div className="border-t border-(--color-elevated-border)/60 bg-(--color-elevated-bg)/90 px-3 py-2 text-xs text-(--color-muted-foreground) rounded-b-xl">
-                    <div className="grid gap-2">
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-(--color-app-foreground) transition hover:border-(--color-button-border) hover:bg-(--color-button-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-                        onClick={() => void handleRename(project.id, project.name)}
+                    {renameProjectId === project.id ? (
+                      <form
+                        className="grid gap-2"
+                        onSubmit={(event) => {
+                          event.preventDefault()
+                          void handleRenameSubmit()
+                        }}
                       >
-                        <LuPencil className="h-4 w-4" /> Rename
-                      </button>
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-(--color-app-foreground) transition hover:border-(--color-button-border) hover:bg-(--color-button-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-                        onClick={() => void handleDuplicate(project.id)}
-                      >
-                        <LuCopy className="h-4 w-4" /> Duplicate
-                      </button>
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-red-500 transition hover:border-red-500/40 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-                        onClick={() => void handleDelete(project.id, project.name)}
-                      >
-                        <LuTrash2 className="h-4 w-4" /> Delete
-                      </button>
-                    </div>
+                        <label className="flex flex-col gap-1 text-left text-(--color-app-foreground)">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-(--color-muted-foreground)">
+                            Rename project
+                          </span>
+                          <input
+                            ref={renameInputRef}
+                            type="text"
+                            value={renameValue}
+                            onChange={(event) => setRenameValue(event.target.value)}
+                            className="w-full rounded-lg border border-(--color-elevated-border) bg-(--color-elevated-bg) px-3 py-2 text-sm text-(--color-app-foreground) shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                            placeholder="Project name"
+                          />
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            type="submit"
+                            className="flex-1 rounded-lg border border-(--color-button-border) bg-(--color-button-bg) px-3 py-2 text-sm font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            className="flex-1 rounded-lg border border-transparent bg-(--color-elevated-bg) px-3 py-2 text-sm font-medium text-(--color-muted-foreground) transition hover:border-(--color-elevated-border) hover:bg-(--color-button-bg)/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                            onClick={handleRenameCancel}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : deleteProjectId === project.id ? (
+                      <div className="grid gap-3">
+                        <p className="text-left text-sm text-(--color-app-foreground)">
+                          Delete project “{deleteProjectName}” and its assets?
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            className="flex-1 rounded-lg border border-red-500 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
+                            onClick={() => void handleDeleteConfirm()}
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            className="flex-1 rounded-lg border border-transparent bg-(--color-elevated-bg) px-3 py-2 text-sm font-medium text-(--color-muted-foreground) transition hover:border-(--color-elevated-border) hover:bg-(--color-button-bg)/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                            onClick={handleDeleteCancel}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-(--color-app-foreground) transition hover:border-(--color-button-border) hover:bg-(--color-button-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                          onClick={() => handleRenameStart(project.id, project.name)}
+                        >
+                          <LuPencil className="h-4 w-4" /> Rename
+                        </button>
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-(--color-app-foreground) transition hover:border-(--color-button-border) hover:bg-(--color-button-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                          onClick={() => void handleDuplicate(project.id)}
+                        >
+                          <LuCopy className="h-4 w-4" /> Duplicate
+                        </button>
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 rounded-md border border-transparent px-2 py-1 text-left font-medium text-red-500 transition hover:border-red-500/40 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
+                          onClick={() => handleDeleteRequest(project.id, project.name)}
+                        >
+                          <LuTrash2 className="h-4 w-4" /> Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : null}
               </li>
@@ -306,7 +424,7 @@ const TopNavigation = () => {
           label="Tools"
           isOpen={openMenu === 'tools'}
           onToggle={toggleMenu}
-          contentClassName="p-3 min-w-[420px] sm:min-w-[560px] lg:min-w-[700px]"
+          contentClassName="p-3 min-w-[260px] sm:min-w-[360px] lg:min-w-[420px]"
         >
           <div className="max-w-full">
             <Toolbar variant="dropdown" />
