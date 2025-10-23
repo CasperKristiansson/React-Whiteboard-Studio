@@ -5,6 +5,7 @@ import { useKeyboardShortcuts } from './app/keyboard'
 import Toolbar from './ui/toolbar'
 import ContextPanel from './ui/context-panel'
 import ThemeToggle from './components/theme-toggle'
+import AssetManager from './ui/asset-manager'
 import {
   selectActiveTool,
   selectTheme,
@@ -115,6 +116,8 @@ function App() {
             </div>
             <ContextPanel />
           </div>
+
+          <AssetManager />
         </div>
       </div>
     </main>

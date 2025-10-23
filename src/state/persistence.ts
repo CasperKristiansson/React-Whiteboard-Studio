@@ -1,30 +1,42 @@
 import { useEffect, useRef } from 'react'
 
 import { useAppStore } from './store'
-import { loadDocument, saveDocument, type ProjectMeta, listProjects, createProject } from '../persistence/adapter'
+import {
+  createProject,
+  listProjects,
+  loadDocument,
+  saveDocument,
+  type ProjectMeta,
+} from '../persistence/adapter'
 
 const AUTOSAVE_DELAY_MS = 500
 
 export const usePersistence = () => {
-  const store = useAppStore()
+  const replaceDocument = useAppStore((state) => state.replaceDocument)
+  const setProjectId = useAppStore((state) => state.setProjectId)
+  const markClean = useAppStore((state) => state.markClean)
+
   const projectRef = useRef<ProjectMeta | null>(null)
   const timerRef = useRef<number | null>(null)
   const isSavingRef = useRef(false)
 
   useEffect(() => {
-    const setup = async () => {
+    const initialise = async () => {
       const projects = await listProjects()
       const selected = projects[0] ?? (await createProject('Untitled'))
       projectRef.current = selected
+      setProjectId(selected.id)
       const doc = await loadDocument(selected.id)
       if (doc) {
-        store.replaceDocument(doc)
+        replaceDocument(doc)
+      } else {
+        markClean()
       }
     }
-    void setup()
 
-    const subscription = useAppStore.subscribe((subscriptionState) => {
-      const { document, dirty } = subscriptionState
+    void initialise()
+
+    const unsubscribe = useAppStore.subscribe(({ document, dirty }) => {
       if (!dirty || !projectRef.current) {
         if (timerRef.current) {
           window.clearTimeout(timerRef.current)
@@ -42,9 +54,7 @@ export const usePersistence = () => {
         try {
           isSavingRef.current = true
           await saveDocument(projectRef.current.id, document)
-          useAppStore.setState((nextState) => {
-            nextState.dirty = false
-          })
+          markClean()
         } catch (error) {
           console.error('Autosave failed', error)
         } finally {
@@ -57,9 +67,10 @@ export const usePersistence = () => {
       if (timerRef.current) {
         window.clearTimeout(timerRef.current)
       }
-      subscription()
+      unsubscribe()
     }
-  }, [store])
+  }, [markClean, replaceDocument, setProjectId])
 
   return null
 }
+

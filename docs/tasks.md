@@ -139,7 +139,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-snap-18
   - Estimate: 60
 
-- [ ] T-assets-20: AssetManager + image insertion (75m)
+- [x] T-assets-20: AssetManager + image insertion (75m)
   - Goal: Import/validate image MIME; store in IndexedDB; insert `ImageShape` with object-fit.
   - Files/paths: `src/services/assets.ts`, `src/ui/AssetManager.tsx`, `src/canvas/controllers/ImageController.ts`
   - Key edits: File picker, blob storage, preview, drag-to-place.
