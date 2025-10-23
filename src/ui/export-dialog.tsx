@@ -1,9 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { exportProjectToJson } from '../export/json'
+import { exportDocumentToPNG } from '../export/png'
+import { exportDocumentToSVG } from '../export/svg'
 import {
   selectDocument,
   selectProjectId,
+  selectSelection,
   useAppSelector,
 } from '../state/store'
 
@@ -13,24 +16,31 @@ const sanitizeFileName = (name: string) =>
 const ExportDialog = () => {
   const projectId = useAppSelector(selectProjectId)
   const currentDocument = useAppSelector(selectDocument)
-  const [isExporting, setExporting] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const selection = useAppSelector(selectSelection)
+  const [isExportingJson, setExportingJson] = useState(false)
+  const [jsonMessage, setJsonMessage] = useState<string | null>(null)
+  const [jsonError, setJsonError] = useState<string | null>(null)
+  const [isExportingPng, setExportingPng] = useState(false)
+  const [pngMessage, setPngMessage] = useState<string | null>(null)
+  const [pngError, setPngError] = useState<string | null>(null)
+  const [isExportingSvg, setExportingSvg] = useState(false)
+  const [svgMessage, setSvgMessage] = useState<string | null>(null)
+  const [svgError, setSvgError] = useState<string | null>(null)
 
   const fileName = useMemo(
     () => `${sanitizeFileName(currentDocument.name)}.wb.json`,
     [currentDocument.name],
   )
 
-  const handleExport = useCallback(async () => {
+  const handleJsonExport = useCallback(async () => {
     if (!projectId) {
-      setError('No project loaded. Try again once autosave has finished initialising.')
+      setJsonError('No project loaded. Try again once autosave has finished initialising.')
       return
     }
 
-    setExporting(true)
-    setMessage(null)
-    setError(null)
+    setExportingJson(true)
+    setJsonMessage(null)
+    setJsonError(null)
 
     try {
       const blob = await exportProjectToJson(projectId, currentDocument)
@@ -42,14 +52,88 @@ const ExportDialog = () => {
       link.click()
       window.document.body.removeChild(link)
       URL.revokeObjectURL(url)
-      setMessage('Export ready')
+      setJsonMessage('Export ready')
     } catch (err) {
       console.error('Export failed', err)
-      setError('Failed to export. Please try again.')
+      setJsonError('Failed to export. Please try again.')
     } finally {
-      setExporting(false)
+      setExportingJson(false)
     }
   }, [currentDocument, fileName, projectId])
+
+  const handlePngExport = useCallback(
+    async (target: 'document' | 'selection') => {
+      if (target === 'selection' && selection.length === 0) {
+        setPngError('Select one or more shapes first.')
+        return
+      }
+
+      setExportingPng(true)
+      setPngMessage(null)
+      setPngError(null)
+
+      try {
+        const blob = await exportDocumentToPNG(
+          currentDocument,
+          target === 'selection' ? { selection } : 'document',
+          2,
+        )
+        const url = URL.createObjectURL(blob)
+        const base = fileName.replace(/\.wb\.json$/i, '')
+        const link = window.document.createElement('a')
+        link.href = url
+        link.download = `${base}-${target === 'selection' ? 'selection' : 'document'}.png`
+        window.document.body.appendChild(link)
+        link.click()
+        window.document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        setPngMessage('PNG exported')
+      } catch (err) {
+        console.error('PNG export failed', err)
+        setPngError('Failed to export PNG. Please try again.')
+      } finally {
+        setExportingPng(false)
+      }
+    },
+    [currentDocument, fileName, selection],
+  )
+
+  const handleSvgExport = useCallback(
+    async (target: 'document' | 'selection') => {
+      if (target === 'selection' && selection.length === 0) {
+        setSvgError('Select one or more shapes first.')
+        return
+      }
+
+      setExportingSvg(true)
+      setSvgMessage(null)
+      setSvgError(null)
+
+      try {
+        const blob = await exportDocumentToSVG(
+          currentDocument,
+          target === 'selection' ? { selection } : 'document',
+        )
+        const url = URL.createObjectURL(blob)
+        const base = fileName.replace(/\.wb\.json$/i, '')
+        const suffix = target === 'selection' ? 'selection' : 'document'
+        const link = window.document.createElement('a')
+        link.href = url
+        link.download = `${base}-${suffix}.svg`
+        window.document.body.appendChild(link)
+        link.click()
+        window.document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        setSvgMessage('SVG exported')
+      } catch (err) {
+        console.error('SVG export failed', err)
+        setSvgError('Failed to export SVG. Please try again.')
+      } finally {
+        setExportingSvg(false)
+      }
+    },
+    [currentDocument, fileName, selection],
+  )
 
   return (
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
@@ -60,14 +144,48 @@ const ExportDialog = () => {
             Download your project as a `.wb.json` file including embedded assets.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={isExporting || !projectId}
-          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isExporting ? 'Preparing…' : 'Export .wb.json'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleJsonExport}
+            disabled={isExportingJson || !projectId}
+            className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isExportingJson ? 'Preparing…' : 'Export .wb.json'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePngExport('document')}
+            disabled={isExportingPng}
+            className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isExportingPng ? 'Preparing…' : 'Export PNG'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePngExport('selection')}
+            disabled={isExportingPng}
+            className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isExportingPng ? 'Preparing…' : 'PNG (selection)'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSvgExport('document')}
+            disabled={isExportingSvg}
+            className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isExportingSvg ? 'Preparing…' : 'Export SVG'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSvgExport('selection')}
+            disabled={isExportingSvg}
+            className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isExportingSvg ? 'Preparing…' : 'SVG (selection)'}
+          </button>
+        </div>
       </header>
 
       <dl className="grid gap-2 text-xs text-(--color-muted-foreground)">
@@ -81,11 +199,23 @@ const ExportDialog = () => {
         </div>
       </dl>
 
-      {message ? (
-        <p className="mt-3 text-xs text-green-500">{message}</p>
+      {jsonMessage ? (
+        <p className="mt-3 text-xs text-green-500">{jsonMessage}</p>
       ) : null}
-      {error ? (
-        <p className="mt-3 text-xs text-red-500">{error}</p>
+      {jsonError ? (
+        <p className="mt-3 text-xs text-red-500">{jsonError}</p>
+      ) : null}
+      {pngMessage ? (
+        <p className="mt-3 text-xs text-green-500">{pngMessage}</p>
+      ) : null}
+      {pngError ? (
+        <p className="mt-1 text-xs text-red-500">{pngError}</p>
+      ) : null}
+      {svgMessage ? (
+        <p className="mt-3 text-xs text-green-500">{svgMessage}</p>
+      ) : null}
+      {svgError ? (
+        <p className="mt-1 text-xs text-red-500">{svgError}</p>
       ) : null}
     </section>
   )

@@ -153,14 +153,14 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-assets-20, T-store-01
   - Estimate: 75
 
-- [ ] T-export-22: Export PNG (viewport/selection) (75m)
+- [x] T-export-22: Export PNG (viewport/selection) (75m)
   - Goal: OffscreenCanvas when available; fallback path; current view or selection.
   - Files/paths: `src/export/png.ts`, `src/ui/ExportDialog.tsx`
   - Key edits: Render to canvas, scaling, selection bounds.
   - Dependencies: T-viewport-03, T-select-08
   - Estimate: 75
 
-- [ ] T-export-23: Export SVG (viewport/selection) (90m)
+- [x] T-export-23: Export SVG (viewport/selection) (90m)
   - Goal: Generate SVG from shapes with correct styles; selection or viewport.
   - Files/paths: `src/export/svg.ts`, `src/ui/ExportDialog.tsx`
   - Key edits: Shape-to-SVG, text styles, clipping by viewport.
