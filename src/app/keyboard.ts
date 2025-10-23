@@ -22,7 +22,8 @@ const isTextInput = (target: EventTarget | null): target is HTMLElement => {
   return Boolean(target.closest('input, textarea, [contenteditable="true"]'))
 }
 
-const isModifierPressed = (event: KeyboardEvent) => event.metaKey || event.ctrlKey
+const isModifierPressed = (event: KeyboardEvent) =>
+  event.metaKey || event.ctrlKey
 
 export const useKeyboardShortcuts = () => {
   useEffect(() => {

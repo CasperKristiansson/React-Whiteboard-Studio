@@ -42,80 +42,79 @@
 ## Data model (v1)
 
 ```ts
-type UUID = string;
+type UUID = string
 
-type Vec2 = { x: number; y: number };
-type RGBA = { r: number; g: number; b: number; a: number };
+type Vec2 = { x: number; y: number }
+type RGBA = { r: number; g: number; b: number; a: number }
 
-type Transform = { x: number; y: number; scale: number; rotation: number }; // rotation deg
+type Transform = { x: number; y: number; scale: number; rotation: number } // rotation deg
 
 type BaseShape = {
-  id: UUID;
-  type: "rect" | "ellipse" | "line" | "arrow" | "path" | "text" | "image";
-  position: Vec2; // world origin of shape
-  rotation: number; // deg
-  zIndex: number;
-  stroke: RGBA;
-  strokeWidth: number;
-  fill?: RGBA;
-  locked?: boolean;
-  hidden?: boolean;
-  createdAt: number;
-  updatedAt: number;
-};
+  id: UUID
+  type: 'rect' | 'ellipse' | 'line' | 'arrow' | 'path' | 'text' | 'image'
+  position: Vec2 // world origin of shape
+  rotation: number // deg
+  zIndex: number
+  stroke: RGBA
+  strokeWidth: number
+  fill?: RGBA
+  locked?: boolean
+  hidden?: boolean
+  createdAt: number
+  updatedAt: number
+}
 
-type Rect = BaseShape & { type: "rect"; size: Vec2; radius?: number };
-type Ellipse = BaseShape & { type: "ellipse"; rx: number; ry: number };
-type Line = BaseShape & { type: "line"; points: Vec2[] };
-type Arrow = BaseShape & { type: "arrow"; points: Vec2[]; headSize: number };
+type Rect = BaseShape & { type: 'rect'; size: Vec2; radius?: number }
+type Ellipse = BaseShape & { type: 'ellipse'; rx: number; ry: number }
+type Line = BaseShape & { type: 'line'; points: Vec2[] }
+type Arrow = BaseShape & { type: 'arrow'; points: Vec2[]; headSize: number }
 type Path = BaseShape & {
-  type: "path";
-  d: Vec2[];
-  closed?: boolean;
-  roughness?: number;
-};
+  type: 'path'
+  d: Vec2[]
+  closed?: boolean
+  roughness?: number
+}
 type TextShape = BaseShape & {
-  type: "text";
-  text: string;
-  box: Vec2; // text box size
-  font: { family: string; weight: number; size: number };
-  letterSpacing?: number;
-  lineHeight?: number;
-  align?: "left" | "center" | "right";
-  italic?: boolean;
-  underline?: boolean;
-  shadow?: { offset: Vec2; blur: number; color: RGBA };
-};
+  type: 'text'
+  text: string
+  box: Vec2 // text box size
+  font: { family: string; weight: number; size: number }
+  letterSpacing?: number
+  lineHeight?: number
+  align?: 'left' | 'center' | 'right'
+  italic?: boolean
+  underline?: boolean
+  shadow?: { offset: Vec2; blur: number; color: RGBA }
+}
 type ImageShape = BaseShape & {
-  type: "image";
-  size: Vec2;
-  assetId: UUID;
-  objectFit?: "contain" | "cover";
-};
+  type: 'image'
+  size: Vec2
+  assetId: UUID
+  objectFit?: 'contain' | 'cover'
+}
 
-type Shape = Rect | Ellipse | Line | Arrow | Path | TextShape | ImageShape;
+type Shape = Rect | Ellipse | Line | Arrow | Path | TextShape | ImageShape
 
 type DocumentV1 = {
-  id: UUID;
-  name: string;
-  shapes: Shape[];
-  viewport: Transform; // last view
-  theme: "light" | "dark" | "system";
-  version: 1;
-};
+  id: UUID
+  name: string
+  shapes: Shape[]
+  viewport: Transform // last view
+  theme: 'light' | 'dark' | 'system'
+  version: 1
+}
 
 type ProjectMeta = {
-  id: UUID;
-  name: string;
-  createdAt: number;
-  updatedAt: number;
-};
+  id: UUID
+  name: string
+  createdAt: number
+  updatedAt: number
+}
 ```
 
 ## Storage
 
 - Dexie tables:
-
   - `projects (id, name, createdAt, updatedAt)`
   - `documents (projectId, doc JSON blob)`
   - `assets (id, projectId, kind: 'image'|'font', blob, mime, meta)`
@@ -130,7 +129,6 @@ type ProjectMeta = {
 - **Select**: Click or marquee. Shift adds/removes.
 - **Transform**: Drag to move. Handles for resize with aspect-lock (Shift). Rotate handle with snap (15°).
 - **Edit**:
-
   - Shapes: live resize, corner radius for rect.
   - Line/Arrow: node drag, add/remove nodes (Alt-click).
   - Path: freehand smoothing (RDP ε configurable).

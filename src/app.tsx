@@ -76,10 +76,14 @@ function App() {
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-6 py-12">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex max-w-2xl flex-col gap-3">
-            <h1 className="text-4xl font-semibold sm:text-5xl">React Whiteboard</h1>
+            <h1 className="text-4xl font-semibold sm:text-5xl">
+              React Whiteboard
+            </h1>
             <p className="text-lg font-medium text-(--color-muted-foreground)">
               Active tool:{' '}
-              <span className="font-semibold text-(--color-app-foreground)">{activeTool}</span>
+              <span className="font-semibold text-(--color-app-foreground)">
+                {activeTool}
+              </span>
             </p>
             <p className="text-sm text-(--color-muted-foreground)">
               Pan with{' '}
@@ -91,7 +95,8 @@ function App() {
                 {' '}
                 Ctrl/Cmd + wheel
               </span>
-              . The viewport currently renders a placeholder while core drawing tools are under development.
+              . The viewport currently renders a placeholder while core drawing
+              tools are under development.
             </p>
           </div>
           <ThemeToggle />

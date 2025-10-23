@@ -30,7 +30,7 @@ const GridLayer = ({ viewport, spacing = 5 }: GridLayerProps) => {
       'linear-gradient(to bottom, rgba(100,116,139,0.18) 1px, transparent 1px)',
   }
 
-  return <div className="absolute inset-0 pointer-events-none" style={style} />
+  return <div className="pointer-events-none absolute inset-0" style={style} />
 }
 
 export default GridLayer

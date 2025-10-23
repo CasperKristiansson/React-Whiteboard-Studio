@@ -11,7 +11,10 @@ export type EllipseDragState = {
   committed: boolean
 }
 
-export const beginEllipse = (point: Vec2, pointerId: number): EllipseDragState => {
+export const beginEllipse = (
+  point: Vec2,
+  pointerId: number,
+): EllipseDragState => {
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()

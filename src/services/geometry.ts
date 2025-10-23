@@ -7,7 +7,12 @@ export type ShapeBounds = {
   maxY: number
 }
 
-const createBounds = (minX: number, minY: number, maxX: number, maxY: number): ShapeBounds => ({
+const createBounds = (
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+): ShapeBounds => ({
   minX,
   minY,
   maxX,
@@ -71,7 +76,9 @@ export const getShapeBounds = (shape: Shape): ShapeBounds => {
   }
 
   if (shape.type === 'line' || shape.type === 'arrow') {
-    const points = shape.points.map((point) => addPosition(shape.position, point))
+    const points = shape.points.map((point) =>
+      addPosition(shape.position, point),
+    )
     return boundsFromPoints(points)
   }
 
@@ -89,7 +96,10 @@ export const getShapeBounds = (shape: Shape): ShapeBounds => {
   )
 }
 
-export const expandBounds = (bounds: ShapeBounds, padding: number): ShapeBounds => ({
+export const expandBounds = (
+  bounds: ShapeBounds,
+  padding: number,
+): ShapeBounds => ({
   minX: bounds.minX - padding,
   minY: bounds.minY - padding,
   maxX: bounds.maxX + padding,
@@ -102,7 +112,10 @@ export const boundsContainPoint = (bounds: ShapeBounds, point: Vec2): boolean =>
   point.y >= bounds.minY &&
   point.y <= bounds.maxY
 
-export const boundsContainBounds = (outer: ShapeBounds, inner: ShapeBounds): boolean =>
+export const boundsContainBounds = (
+  outer: ShapeBounds,
+  inner: ShapeBounds,
+): boolean =>
   inner.minX >= outer.minX &&
   inner.maxX <= outer.maxX &&
   inner.minY >= outer.minY &&

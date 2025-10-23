@@ -13,7 +13,9 @@ import type {
 } from '../../types'
 
 const cloneShape = <T extends Shape>(shape: T): T =>
-  'structuredClone' in globalThis ? structuredClone(shape) : JSON.parse(JSON.stringify(shape))
+  'structuredClone' in globalThis
+    ? structuredClone(shape)
+    : JSON.parse(JSON.stringify(shape))
 
 export type ShapeSnapshot = {
   id: string
@@ -56,7 +58,9 @@ export const createTransformSnapshot = (shapes: Shape[]): TransformSnapshot => {
     bounds: getShapeBounds(shape),
   }))
 
-  const selectionBounds = combineBounds(shapeSnapshots.map((snapshot) => snapshot.bounds))
+  const selectionBounds = combineBounds(
+    shapeSnapshots.map((snapshot) => snapshot.bounds),
+  )
 
   return {
     selectionBounds,
@@ -96,7 +100,8 @@ const transformCoordinate = (
   newSize: number,
 ) => newMin + ((value - originalMin) / originalSize) * newSize
 
-const ensureSize = (size: number) => (Math.abs(size) < 1e-6 ? (size >= 0 ? 1e-6 : -1e-6) : size)
+const ensureSize = (size: number) =>
+  Math.abs(size) < 1e-6 ? (size >= 0 ? 1e-6 : -1e-6) : size
 
 const scaleBoundsOfShape = (
   originalBounds: ShapeBounds,
@@ -151,12 +156,27 @@ const scaleWorldPoint = (
   const newHeight = newBounds.maxY - newBounds.minY
 
   return {
-    x: transformCoordinate(point.x, selectionBounds.minX, originalWidth, newBounds.minX, newWidth),
-    y: transformCoordinate(point.y, selectionBounds.minY, originalHeight, newBounds.minY, newHeight),
+    x: transformCoordinate(
+      point.x,
+      selectionBounds.minX,
+      originalWidth,
+      newBounds.minX,
+      newWidth,
+    ),
+    y: transformCoordinate(
+      point.y,
+      selectionBounds.minY,
+      originalHeight,
+      newBounds.minY,
+      newHeight,
+    ),
   }
 }
 
-export const applyScale = (snapshot: TransformSnapshot, newBounds: ShapeBounds) => {
+export const applyScale = (
+  snapshot: TransformSnapshot,
+  newBounds: ShapeBounds,
+) => {
   const store = useAppStore.getState()
   const { selectionBounds } = snapshot
 
@@ -222,8 +242,14 @@ export const applyScale = (snapshot: TransformSnapshot, newBounds: ShapeBounds) 
           y: point.y - line.position.y,
         }))
         if (line.type === 'arrow') {
-          const widthScale = Math.abs((newBounds.maxX - newBounds.minX) / (selectionBounds.maxX - selectionBounds.minX || 1))
-          const heightScale = Math.abs((newBounds.maxY - newBounds.minY) / (selectionBounds.maxY - selectionBounds.minY || 1))
+          const widthScale = Math.abs(
+            (newBounds.maxX - newBounds.minX) /
+              (selectionBounds.maxX - selectionBounds.minX || 1),
+          )
+          const heightScale = Math.abs(
+            (newBounds.maxY - newBounds.minY) /
+              (selectionBounds.maxY - selectionBounds.minY || 1),
+          )
           const uniform = Math.sqrt(widthScale * heightScale)
           line.headSize = Math.max(4, line.headSize * uniform)
         }
@@ -265,7 +291,11 @@ const rotatePoint = (point: Vec2, center: Vec2, angle: number): Vec2 => {
   }
 }
 
-export const applyRotation = (snapshot: TransformSnapshot, angle: number, center: Vec2) => {
+export const applyRotation = (
+  snapshot: TransformSnapshot,
+  angle: number,
+  center: Vec2,
+) => {
   const store = useAppStore.getState()
   const deltaDegrees = (angle * 180) / Math.PI
 
@@ -289,7 +319,9 @@ export const applyRotation = (snapshot: TransformSnapshot, angle: number, center
           x: originalLine.position.x + point.x,
           y: originalLine.position.y + point.y,
         }))
-        const rotatedPoints = originalWorldPoints.map((point) => rotatePoint(point, center, angle))
+        const rotatedPoints = originalWorldPoints.map((point) =>
+          rotatePoint(point, center, angle),
+        )
         line.position = { ...rotatedPoints[0] }
         line.points = rotatedPoints.map((point) => ({
           x: point.x - line.position.x,
@@ -304,7 +336,9 @@ export const applyRotation = (snapshot: TransformSnapshot, angle: number, center
           x: originalPath.position.x + point.x,
           y: originalPath.position.y + point.y,
         }))
-        const rotatedPoints = originalWorldPoints.map((point) => rotatePoint(point, center, angle))
+        const rotatedPoints = originalWorldPoints.map((point) =>
+          rotatePoint(point, center, angle),
+        )
         path.position = { ...rotatedPoints[0] }
         path.d = rotatedPoints.map((point) => ({
           x: point.x - path.position.x,

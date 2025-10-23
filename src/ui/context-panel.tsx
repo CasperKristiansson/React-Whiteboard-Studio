@@ -6,7 +6,14 @@ import {
   useAppSelector,
   useAppStore,
 } from '../state/store'
-import type { EllipseShape, ImageShape, RectShape, RGBA, Shape, TextShape } from '../types'
+import type {
+  EllipseShape,
+  ImageShape,
+  RectShape,
+  RGBA,
+  Shape,
+  TextShape,
+} from '../types'
 
 const toHex = (value: number) => {
   const clamped = Math.min(255, Math.max(0, Math.round(value)))
@@ -70,7 +77,12 @@ const getSharedValue = <S extends Shape, T>(
 const supportsFill = (
   shape: Shape,
 ): shape is RectShape | EllipseShape | TextShape | ImageShape => {
-  return shape.type === 'rect' || shape.type === 'ellipse' || shape.type === 'text' || shape.type === 'image'
+  return (
+    shape.type === 'rect' ||
+    shape.type === 'ellipse' ||
+    shape.type === 'text' ||
+    shape.type === 'image'
+  )
 }
 
 const isTextShape = (shape: Shape): shape is TextShape => shape.type === 'text'
@@ -93,11 +105,14 @@ const ContextPanel = () => {
   )
 
   const hasSelection = selectedShapes.length > 0
-  const allSupportFill = hasSelection && selectedShapes.every((shape) => supportsFill(shape))
-  const anySupportsFill = hasSelection && selectedShapes.some((shape) => supportsFill(shape))
-  const strokeMixed = getSharedValue(selectedShapes, (shape) =>
-    shape.stroke ? rgbaToHex(shape.stroke) : null,
-  ) === null
+  const allSupportFill =
+    hasSelection && selectedShapes.every((shape) => supportsFill(shape))
+  const anySupportsFill =
+    hasSelection && selectedShapes.some((shape) => supportsFill(shape))
+  const strokeMixed =
+    getSharedValue(selectedShapes, (shape) =>
+      shape.stroke ? rgbaToHex(shape.stroke) : null,
+    ) === null
 
   const sharedStroke = useMemo(() => {
     const value = getSharedValue(selectedShapes, (shape) => shape.stroke)
@@ -113,19 +128,21 @@ const ContextPanel = () => {
   const sharedFill = useMemo(() => {
     if (!allSupportFill) return '#ffffff'
     const value = getSharedValue(selectedShapes, (shape) =>
-      supportsFill(shape) ? shape.fill ?? undefined : null,
+      supportsFill(shape) ? (shape.fill ?? undefined) : null,
     )
     return value ? rgbaToHex(value) : '#ffffff'
   }, [selectedShapes, allSupportFill])
 
-  const strokeWidthMixed = getSharedValue(selectedShapes, (shape) => shape.strokeWidth) === null
+  const strokeWidthMixed =
+    getSharedValue(selectedShapes, (shape) => shape.strokeWidth) === null
   const sharedStrokeWidth = useMemo(() => {
     const value = getSharedValue(selectedShapes, (shape) => shape.strokeWidth)
     return value ?? 2
   }, [selectedShapes])
 
   const textShapes = useMemo(
-    () => selectedShapes.filter((shape): shape is TextShape => isTextShape(shape)),
+    () =>
+      selectedShapes.filter((shape): shape is TextShape => isTextShape(shape)),
     [selectedShapes],
   )
   const allText = hasSelection && textShapes.length === selectedShapes.length
@@ -154,7 +171,10 @@ const ContextPanel = () => {
 
   const sharedLetterSpacing = useMemo(() => {
     if (!allText) return ''
-    const value = getSharedValue(textShapes, (shape) => shape.letterSpacing ?? 0)
+    const value = getSharedValue(
+      textShapes,
+      (shape) => shape.letterSpacing ?? 0,
+    )
     return value ?? ''
   }, [textShapes, allText])
 
@@ -165,7 +185,8 @@ const ContextPanel = () => {
   }, [textShapes, allText])
 
   const italicMixed =
-    allText && getSharedValue(textShapes, (shape) => shape.italic ?? false) === null
+    allText &&
+    getSharedValue(textShapes, (shape) => shape.italic ?? false) === null
   const sharedItalic = useMemo(() => {
     if (!allText) return false
     const value = getSharedValue(textShapes, (shape) => shape.italic ?? false)
@@ -173,10 +194,14 @@ const ContextPanel = () => {
   }, [textShapes, allText])
 
   const underlineMixed =
-    allText && getSharedValue(textShapes, (shape) => shape.underline ?? false) === null
+    allText &&
+    getSharedValue(textShapes, (shape) => shape.underline ?? false) === null
   const sharedUnderline = useMemo(() => {
     if (!allText) return false
-    const value = getSharedValue(textShapes, (shape) => shape.underline ?? false)
+    const value = getSharedValue(
+      textShapes,
+      (shape) => shape.underline ?? false,
+    )
     return value ?? false
   }, [textShapes, allText])
 
@@ -194,7 +219,12 @@ const ContextPanel = () => {
 
   const handleStrokeChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const nextColor = hexToRgba(event.target.value, { r: 0, g: 0, b: 0, a: 1 })
+      const nextColor = hexToRgba(event.target.value, {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 1,
+      })
       applyChange('Change stroke', (shape) => {
         shape.stroke = { ...nextColor }
       })
@@ -216,7 +246,12 @@ const ContextPanel = () => {
 
   const handleFillChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const nextColor = hexToRgba(event.target.value, { r: 255, g: 255, b: 255, a: 1 })
+      const nextColor = hexToRgba(event.target.value, {
+        r: 255,
+        g: 255,
+        b: 255,
+        a: 1,
+      })
       applyChange('Change fill', (shape) => {
         if (supportsFill(shape)) {
           shape.fill = { ...nextColor }
@@ -341,10 +376,14 @@ const ContextPanel = () => {
   }, [selectedShapes, hasSelection])
 
   return (
-    <aside className="flex h-full min-h-[320px] flex-col gap-4 rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-5 text-sm text-(--color-elevated-foreground) shadow-lg backdrop-blur">
+    <aside className="flex h-full min-h-80 flex-col gap-4 rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-5 text-sm text-(--color-elevated-foreground) shadow-lg backdrop-blur">
       <header className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-(--color-app-foreground)">Properties</h2>
-        <p className="text-xs text-(--color-muted-foreground)">{selectionSummary}</p>
+        <h2 className="text-base font-semibold text-(--color-app-foreground)">
+          Properties
+        </h2>
+        <p className="text-xs text-(--color-muted-foreground)">
+          {selectionSummary}
+        </p>
       </header>
 
       {!hasSelection ? (
@@ -393,7 +432,7 @@ const ContextPanel = () => {
                 <span className="text-xs font-medium text-(--color-muted-foreground)">
                   {formatMixedLabel(fillLabel, fillMixed)}
                   {!allSupportFill ? (
-                    <span className="ml-2 text-[10px] uppercase tracking-wide text-(--color-muted-foreground)">
+                    <span className="ml-2 text-[10px] tracking-wide text-(--color-muted-foreground) uppercase">
                       limited
                     </span>
                   ) : null}
@@ -417,7 +456,9 @@ const ContextPanel = () => {
               </h3>
 
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-(--color-muted-foreground)">Font family</span>
+                <span className="text-xs font-medium text-(--color-muted-foreground)">
+                  Font family
+                </span>
                 <input
                   aria-label="Font family"
                   className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
@@ -430,7 +471,9 @@ const ContextPanel = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-(--color-muted-foreground)">Font size</span>
+                  <span className="text-xs font-medium text-(--color-muted-foreground)">
+                    Font size
+                  </span>
                   <input
                     aria-label="Font size"
                     className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
@@ -445,7 +488,9 @@ const ContextPanel = () => {
                 </label>
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-(--color-muted-foreground)">Font weight</span>
+                  <span className="text-xs font-medium text-(--color-muted-foreground)">
+                    Font weight
+                  </span>
                   <input
                     aria-label="Font weight"
                     className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
@@ -461,7 +506,9 @@ const ContextPanel = () => {
               </div>
 
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-(--color-muted-foreground)">Align</span>
+                <span className="text-xs font-medium text-(--color-muted-foreground)">
+                  Align
+                </span>
                 <select
                   aria-label="Text alignment"
                   className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
@@ -476,7 +523,9 @@ const ContextPanel = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-(--color-muted-foreground)">Letter spacing</span>
+                  <span className="text-xs font-medium text-(--color-muted-foreground)">
+                    Letter spacing
+                  </span>
                   <input
                     aria-label="Letter spacing"
                     className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"
@@ -489,7 +538,9 @@ const ContextPanel = () => {
                 </label>
 
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-(--color-muted-foreground)">Line height</span>
+                  <span className="text-xs font-medium text-(--color-muted-foreground)">
+                    Line height
+                  </span>
                   <input
                     aria-label="Line height"
                     className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-xs font-medium text-(--color-app-foreground)"

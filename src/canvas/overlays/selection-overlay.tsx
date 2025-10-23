@@ -32,7 +32,10 @@ const HANDLE_SIZE = 12
 const ROTATION_HANDLE_SIZE = 16
 const ROTATION_OFFSET = 32
 
-const getHandleStyle = (position: HandlePosition, bounds: ScreenRect): React.CSSProperties => {
+const getHandleStyle = (
+  position: HandlePosition,
+  bounds: ScreenRect,
+): React.CSSProperties => {
   const half = HANDLE_SIZE / 2
   const centerX = bounds.x + bounds.width / 2
   const centerY = bounds.y + bounds.height / 2
@@ -94,7 +97,10 @@ const SelectionOverlay = ({
   screenBounds: ScreenRect | null
   marquee: ScreenRect | null
   onMovePointerDown?: (event: PointerEvent<HTMLDivElement>) => void
-  onHandlePointerDown?: (event: PointerEvent<HTMLDivElement>, handle: HandlePosition) => void
+  onHandlePointerDown?: (
+    event: PointerEvent<HTMLDivElement>,
+    handle: HandlePosition,
+  ) => void
   onRotatePointerDown?: (event: PointerEvent<HTMLDivElement>) => void
 }) => {
   return (
@@ -119,7 +125,7 @@ const SelectionOverlay = ({
             <div
               key={position}
               data-handle={position}
-              className="absolute transform-handle pointer-events-auto"
+              className="transform-handle pointer-events-auto absolute"
               style={getHandleStyle(position, screenBounds)}
               onPointerDown={(event) => {
                 event.stopPropagation()
@@ -142,7 +148,10 @@ const SelectionOverlay = ({
           <div
             className="transform-rotate-handle pointer-events-auto absolute border border-[rgba(255,255,255,0.9)] bg-(--color-accent)"
             style={{
-              left: screenBounds.x + screenBounds.width / 2 - ROTATION_HANDLE_SIZE / 2,
+              left:
+                screenBounds.x +
+                screenBounds.width / 2 -
+                ROTATION_HANDLE_SIZE / 2,
               top: screenBounds.y - ROTATION_OFFSET,
               width: ROTATION_HANDLE_SIZE,
               height: ROTATION_HANDLE_SIZE,

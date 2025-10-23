@@ -41,8 +41,17 @@ body {
   min-height: 100vh;
   background-color: var(--color-app-bg);
   color: var(--color-app-foreground);
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-  transition: background-color 160ms ease, color 160ms ease;
+  font-family:
+    'Inter',
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Helvetica Neue',
+    sans-serif;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 * {

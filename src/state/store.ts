@@ -314,7 +314,9 @@ export const useAppStore = create<AppStore>()(
           points.map((point) => ({ x: point.x + 16, y: point.y + 16 }))
 
         state.selection.forEach((id) => {
-          const original = state.document.shapes.find((shape) => shape.id === id)
+          const original = state.document.shapes.find(
+            (shape) => shape.id === id,
+          )
           if (!original) return
 
           const newId = createShapeId()
@@ -408,11 +410,18 @@ export const useAppStore = create<AppStore>()(
     bringSelectionToFront: () => {
       set((state) => {
         reorderSelection(state, (sorted, selected) => {
-          const selectedShapes = sorted.filter((shape) => selected.has(shape.id))
-          if (!selectedShapes.length || selectedShapes.length === sorted.length) {
+          const selectedShapes = sorted.filter((shape) =>
+            selected.has(shape.id),
+          )
+          if (
+            !selectedShapes.length ||
+            selectedShapes.length === sorted.length
+          ) {
             return false
           }
-          const unselectedShapes = sorted.filter((shape) => !selected.has(shape.id))
+          const unselectedShapes = sorted.filter(
+            (shape) => !selected.has(shape.id),
+          )
           if (!unselectedShapes.length) {
             return false
           }
@@ -420,7 +429,8 @@ export const useAppStore = create<AppStore>()(
           let changed = false
           for (let index = 0; index < selectedShapes.length; index += 1) {
             const source = selectedShapes[index]
-            const destination = sorted[sorted.length - selectedShapes.length + index]
+            const destination =
+              sorted[sorted.length - selectedShapes.length + index]
             if (source.id !== destination.id) {
               changed = true
               break
@@ -439,11 +449,18 @@ export const useAppStore = create<AppStore>()(
     sendSelectionToBack: () => {
       set((state) => {
         reorderSelection(state, (sorted, selected) => {
-          const selectedShapes = sorted.filter((shape) => selected.has(shape.id))
-          if (!selectedShapes.length || selectedShapes.length === sorted.length) {
+          const selectedShapes = sorted.filter((shape) =>
+            selected.has(shape.id),
+          )
+          if (
+            !selectedShapes.length ||
+            selectedShapes.length === sorted.length
+          ) {
             return false
           }
-          const unselectedShapes = sorted.filter((shape) => !selected.has(shape.id))
+          const unselectedShapes = sorted.filter(
+            (shape) => !selected.has(shape.id),
+          )
           if (!unselectedShapes.length) {
             return false
           }
@@ -596,7 +613,7 @@ export const selectCanUndo = (state: AppStore) =>
 export const selectCanRedo = (state: AppStore) =>
   state.history.future.length > 0
 
-export const useAppSelector = <T,>(selector: (state: AppStore) => T) =>
+export const useAppSelector = <T>(selector: (state: AppStore) => T) =>
   useAppStore(selector)
 
 export const createShapeId = () => makeId()

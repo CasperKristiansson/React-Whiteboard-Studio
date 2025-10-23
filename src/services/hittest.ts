@@ -28,7 +28,12 @@ const distancePointToSegment = (point: Vec2, a: Vec2, b: Vec2): number => {
   return Math.hypot(point.x - closestX, point.y - closestY)
 }
 
-const pointInEllipse = (point: Vec2, center: Vec2, rx: number, ry: number): boolean => {
+const pointInEllipse = (
+  point: Vec2,
+  center: Vec2,
+  rx: number,
+  ry: number,
+): boolean => {
   const normalizedX = (point.x - center.x) / rx
   const normalizedY = (point.y - center.y) / ry
   return normalizedX * normalizedX + normalizedY * normalizedY <= 1
@@ -43,7 +48,9 @@ const pointInPolygon = (point: Vec2, vertices: Vec2[]): boolean => {
     const xj = vertices[j].x
     const yj = vertices[j].y
 
-    const intersect = yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi + Number.EPSILON) + xi
+    const intersect =
+      yi > point.y !== yj > point.y &&
+      point.x < ((xj - xi) * (point.y - yi)) / (yj - yi + Number.EPSILON) + xi
     if (intersect) inside = !inside
   }
   return inside
@@ -62,7 +69,10 @@ const pointInShape = (shape: Shape, point: Vec2): boolean => {
       const worldPoints = toWorldPoints(shape.position, shape.points)
       const tolerance = Math.max(4, shape.strokeWidth)
       for (let i = 0; i < worldPoints.length - 1; i += 1) {
-        if (distancePointToSegment(point, worldPoints[i], worldPoints[i + 1]) <= tolerance) {
+        if (
+          distancePointToSegment(point, worldPoints[i], worldPoints[i + 1]) <=
+          tolerance
+        ) {
           return true
         }
       }
@@ -75,7 +85,10 @@ const pointInShape = (shape: Shape, point: Vec2): boolean => {
       }
       const tolerance = Math.max(4, shape.strokeWidth ?? 4)
       for (let i = 0; i < worldPoints.length - 1; i += 1) {
-        if (distancePointToSegment(point, worldPoints[i], worldPoints[i + 1]) <= tolerance) {
+        if (
+          distancePointToSegment(point, worldPoints[i], worldPoints[i + 1]) <=
+          tolerance
+        ) {
           return true
         }
       }
@@ -97,7 +110,10 @@ export const hitTestShapes = (shapes: Shape[], point: Vec2): Shape | null => {
   return null
 }
 
-export const getShapesWithinBounds = (shapes: Shape[], bounds: ShapeBounds): Shape[] =>
+export const getShapesWithinBounds = (
+  shapes: Shape[],
+  bounds: ShapeBounds,
+): Shape[] =>
   shapes.filter((shape) => boundsContainBounds(bounds, getShapeBounds(shape)))
 
 export const createWorldMarquee = (start: Vec2, end: Vec2): ShapeBounds =>

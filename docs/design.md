@@ -5,6 +5,7 @@
 The application is a client-only, single-page web app built with React + TypeScript. It renders an infinite canvas using Canvas2D via Konva (react-konva) and manages state with Zustand + Immer. Data persists locally to IndexedDB using Dexie, with small settings in localStorage. No backend services or external network calls are used in v1.
 
 Key layers:
+
 - UI and Controls: AppShell, Toolbar, ContextPanel, ProjectManager, AssetManager.
 - Viewport and Rendering: CanvasViewport (pan/zoom + event routing), Background/Grid, Shapes Layer, Selection/Guides overlay.
 - Domain and State: Store (Zustand), Command History ring buffer, Tool Controllers, Selection/Transform Controller.
@@ -77,62 +78,94 @@ Build/runtime (assumed from requirements): Vite + TypeScript, Tailwind CSS, ESLi
 Types (from spec; TS notation):
 
 ```ts
-export type UUID = string;
+export type UUID = string
 
-export type Vec2 = { x: number; y: number };
-export type RGBA = { r: number; g: number; b: number; a: number };
+export type Vec2 = { x: number; y: number }
+export type RGBA = { r: number; g: number; b: number; a: number }
 
-export type Transform = { x: number; y: number; scale: number; rotation: number };
+export type Transform = {
+  x: number
+  y: number
+  scale: number
+  rotation: number
+}
 
 export type BaseShape = {
-  id: UUID;
-  type: 'rect' | 'ellipse' | 'line' | 'arrow' | 'path' | 'text' | 'image';
-  position: Vec2;
-  rotation: number; // degrees
-  zIndex: number;
-  stroke: RGBA;
-  strokeWidth: number;
-  fill?: RGBA;
-  locked?: boolean;
-  hidden?: boolean;
-  createdAt: number;
-  updatedAt: number;
-};
+  id: UUID
+  type: 'rect' | 'ellipse' | 'line' | 'arrow' | 'path' | 'text' | 'image'
+  position: Vec2
+  rotation: number // degrees
+  zIndex: number
+  stroke: RGBA
+  strokeWidth: number
+  fill?: RGBA
+  locked?: boolean
+  hidden?: boolean
+  createdAt: number
+  updatedAt: number
+}
 
-export type Rect = BaseShape & { type: 'rect'; size: Vec2; radius?: number };
-export type Ellipse = BaseShape & { type: 'ellipse'; rx: number; ry: number };
-export type Line = BaseShape & { type: 'line'; points: Vec2[] };
-export type Arrow = BaseShape & { type: 'arrow'; points: Vec2[]; headSize: number };
-export type Path = BaseShape & { type: 'path'; d: Vec2[]; closed?: boolean; roughness?: number };
+export type Rect = BaseShape & { type: 'rect'; size: Vec2; radius?: number }
+export type Ellipse = BaseShape & { type: 'ellipse'; rx: number; ry: number }
+export type Line = BaseShape & { type: 'line'; points: Vec2[] }
+export type Arrow = BaseShape & {
+  type: 'arrow'
+  points: Vec2[]
+  headSize: number
+}
+export type Path = BaseShape & {
+  type: 'path'
+  d: Vec2[]
+  closed?: boolean
+  roughness?: number
+}
 export type TextShape = BaseShape & {
-  type: 'text';
-  text: string;
-  box: Vec2; // text box size
-  font: { family: string; weight: number; size: number };
-  letterSpacing?: number;
-  lineHeight?: number;
-  align?: 'left' | 'center' | 'right';
-  italic?: boolean;
-  underline?: boolean;
-  shadow?: { offset: Vec2; blur: number; color: RGBA };
-};
-export type ImageShape = BaseShape & { type: 'image'; size: Vec2; assetId: UUID; objectFit?: 'contain' | 'cover' };
+  type: 'text'
+  text: string
+  box: Vec2 // text box size
+  font: { family: string; weight: number; size: number }
+  letterSpacing?: number
+  lineHeight?: number
+  align?: 'left' | 'center' | 'right'
+  italic?: boolean
+  underline?: boolean
+  shadow?: { offset: Vec2; blur: number; color: RGBA }
+}
+export type ImageShape = BaseShape & {
+  type: 'image'
+  size: Vec2
+  assetId: UUID
+  objectFit?: 'contain' | 'cover'
+}
 
-export type Shape = Rect | Ellipse | Line | Arrow | Path | TextShape | ImageShape;
+export type Shape =
+  | Rect
+  | Ellipse
+  | Line
+  | Arrow
+  | Path
+  | TextShape
+  | ImageShape
 
 export type DocumentV1 = {
-  id: UUID;
-  name: string;
-  shapes: Shape[];
-  viewport: Transform;
-  theme: 'light' | 'dark' | 'system';
-  version: 1;
-};
+  id: UUID
+  name: string
+  shapes: Shape[]
+  viewport: Transform
+  theme: 'light' | 'dark' | 'system'
+  version: 1
+}
 
-export type ProjectMeta = { id: UUID; name: string; createdAt: number; updatedAt: number };
+export type ProjectMeta = {
+  id: UUID
+  name: string
+  createdAt: number
+  updatedAt: number
+}
 ```
 
 Dexie (IndexedDB) schema:
+
 - projects: `{ id: UUID, name: string, createdAt: number, updatedAt: number }`
 - documents: `{ projectId: UUID, doc: DocumentV1 }`
 - assets: `{ id: UUID, projectId: UUID, kind: 'image' | 'font', blob: Blob, mime: string, meta?: any }`
@@ -141,10 +174,10 @@ Export file contract:
 
 ```ts
 export type ExportWBJsonV1 = {
-  document: DocumentV1;
-  assets: Record<UUID, { dataUrl: string; mime: string; meta?: any }>;
-  formatVersion: 1;
-};
+  document: DocumentV1
+  assets: Record<UUID, { dataUrl: string; mime: string; meta?: any }>
+  formatVersion: 1
+}
 ```
 
 ## 4. APIs and Endpoints
@@ -152,62 +185,84 @@ export type ExportWBJsonV1 = {
 No network endpoints in v1. Public API is internal module boundaries:
 
 Store API (subset):
+
 ```ts
-export type Tool = 'select' | 'rect' | 'ellipse' | 'line' | 'arrow' | 'path' | 'text' | 'image';
+export type Tool =
+  | 'select'
+  | 'rect'
+  | 'ellipse'
+  | 'line'
+  | 'arrow'
+  | 'path'
+  | 'text'
+  | 'image'
 
 export interface AppState {
-  document: DocumentV1;
-  selection: UUID[];
-  activeTool: Tool;
-  viewport: Transform;
-  settings: { gridVisible: boolean; snapEnabled: boolean };
+  document: DocumentV1
+  selection: UUID[]
+  activeTool: Tool
+  viewport: Transform
+  settings: { gridVisible: boolean; snapEnabled: boolean }
 }
 
 export interface Actions {
-  setTool(tool: Tool): void;
-  setViewport(update: Partial<Transform>): void; // clamps scale
-  addShape(shape: Shape): void;
-  updateShape(id: UUID, updater: (s: Shape) => void): void;
-  deleteShapes(ids: UUID[]): void;
-  select(ids: UUID[], mode: 'set' | 'add' | 'toggle'): void;
-  transformSelection(tx: Partial<Transform>): void; // move/rotate/scale
-  commit(label: string): void; // push to history
-  undo(): void;
-  redo(): void;
+  setTool(tool: Tool): void
+  setViewport(update: Partial<Transform>): void // clamps scale
+  addShape(shape: Shape): void
+  updateShape(id: UUID, updater: (s: Shape) => void): void
+  deleteShapes(ids: UUID[]): void
+  select(ids: UUID[], mode: 'set' | 'add' | 'toggle'): void
+  transformSelection(tx: Partial<Transform>): void // move/rotate/scale
+  commit(label: string): void // push to history
+  undo(): void
+  redo(): void
 }
 ```
 
 Persistence API:
+
 ```ts
 export interface Persistence {
-  listProjects(): Promise<ProjectMeta[]>;
-  createProject(name: string): Promise<ProjectMeta>;
-  renameProject(id: UUID, name: string): Promise<void>;
-  duplicateProject(id: UUID): Promise<ProjectMeta>;
-  deleteProject(id: UUID): Promise<void>;
+  listProjects(): Promise<ProjectMeta[]>
+  createProject(name: string): Promise<ProjectMeta>
+  renameProject(id: UUID, name: string): Promise<void>
+  duplicateProject(id: UUID): Promise<ProjectMeta>
+  deleteProject(id: UUID): Promise<void>
 
-  loadDocument(projectId: UUID): Promise<DocumentV1 | null>;
-  saveDocument(projectId: UUID, doc: DocumentV1): Promise<void>;
+  loadDocument(projectId: UUID): Promise<DocumentV1 | null>
+  saveDocument(projectId: UUID, doc: DocumentV1): Promise<void>
 
-  putAsset(a: { id: UUID; projectId: UUID; kind: 'image' | 'font'; blob: Blob; mime: string; meta?: any }): Promise<void>;
-  getAsset(id: UUID): Promise<{ blob: Blob; mime: string; meta?: any } | null>;
+  putAsset(a: {
+    id: UUID
+    projectId: UUID
+    kind: 'image' | 'font'
+    blob: Blob
+    mime: string
+    meta?: any
+  }): Promise<void>
+  getAsset(id: UUID): Promise<{ blob: Blob; mime: string; meta?: any } | null>
 }
 ```
 
 Export/Import API:
+
 ```ts
 export interface Exporter {
-  exportWBJson(doc: DocumentV1, assets: Persistence): Promise<ExportWBJsonV1>;
-  exportPNG(view: 'viewport' | { selection: UUID[] }, scale?: number): Promise<Blob>;
-  exportSVG(view: 'viewport' | { selection: UUID[] }): Promise<Blob>;
+  exportWBJson(doc: DocumentV1, assets: Persistence): Promise<ExportWBJsonV1>
+  exportPNG(
+    view: 'viewport' | { selection: UUID[] },
+    scale?: number,
+  ): Promise<Blob>
+  exportSVG(view: 'viewport' | { selection: UUID[] }): Promise<Blob>
 }
 
 export interface Importer {
-  importWBJson(file: File, persistence: Persistence): Promise<DocumentV1>;
+  importWBJson(file: File, persistence: Persistence): Promise<DocumentV1>
 }
 ```
 
 Error taxonomy:
+
 ```ts
 export type AppErrorCode =
   | 'PersistenceError'
@@ -215,11 +270,16 @@ export type AppErrorCode =
   | 'AssetError'
   | 'ImportError'
   | 'ExportError'
-  | 'Unsupported';
+  | 'Unsupported'
 
 export class AppError extends Error {
-  constructor(public code: AppErrorCode, message: string, public cause?: unknown, public data?: any) {
-    super(message);
+  constructor(
+    public code: AppErrorCode,
+    message: string,
+    public cause?: unknown,
+    public data?: any,
+  ) {
+    super(message)
   }
 }
 ```
@@ -289,6 +349,7 @@ export class AppError extends Error {
 ## 11. Diagrams (Mermaid)
 
 Flowchart – Event to Render
+
 ```mermaid
 flowchart LR
   P[Pointer/Keyboard] --> V[CanvasViewport]
@@ -303,6 +364,7 @@ flowchart LR
 ```
 
 ER Diagram – Local Persistence
+
 ```mermaid
 erDiagram
   PROJECTS ||--o{ DOCUMENTS : contains
@@ -328,6 +390,7 @@ erDiagram
 ```
 
 Sequence – Edit, Commit, Undo
+
 ```mermaid
 sequenceDiagram
   participant U as User
@@ -373,4 +436,3 @@ sequenceDiagram
 - docs/requirements.md: Approved requirements including ACs, NFRs, scope, and architecture assumptions.
 - docs/description.md: Original technical spec covering tools, data model, interaction model, storage, and performance notes.
 - (No code or configs present; conventions inferred from the specs.)
-

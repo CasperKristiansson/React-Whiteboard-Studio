@@ -21,7 +21,8 @@ export const beginPath = (point: Vec2, pointerId: number): PathState => {
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()
-  const smoothingEpsilon = store.settings.pathSmoothingEpsilon ?? DEFAULT_SMOOTHING_EPSILON
+  const smoothingEpsilon =
+    store.settings.pathSmoothingEpsilon ?? DEFAULT_SMOOTHING_EPSILON
 
   store.addShape({
     id,
@@ -54,7 +55,11 @@ type UpdateOptions = {
 
 const distanceBetween = (a: Vec2, b: Vec2) => Math.hypot(b.x - a.x, b.y - a.y)
 
-export const updatePath = (state: PathState, point: Vec2, options?: UpdateOptions) => {
+export const updatePath = (
+  state: PathState,
+  point: Vec2,
+  options?: UpdateOptions,
+) => {
   const { force = false } = options ?? {}
   const lastIndex = state.points.length - 1
   const last = state.points[lastIndex]

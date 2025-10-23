@@ -31,7 +31,7 @@ const ToolbarButton = ({
     <button
       type="button"
       className={clsx(
-    'flex flex-col items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+        'flex flex-col items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
         active
           ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
           : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
@@ -41,7 +41,13 @@ const ToolbarButton = ({
       onClick={() => onSelect(value)}
     >
       <span className="text-sm">{label}</span>
-      <kbd className={clsx('rounded bg-(--color-accent)/10 px-1 text-[0.7rem] text-(--color-accent)')}>{shortcut}</kbd>
+      <kbd
+        className={clsx(
+          'rounded bg-(--color-accent)/10 px-1 text-[0.7rem] text-(--color-accent)',
+        )}
+      >
+        {shortcut}
+      </kbd>
     </button>
   )
 }

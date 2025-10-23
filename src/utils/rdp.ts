@@ -1,6 +1,10 @@
 import type { Vec2 } from '../types'
 
-const getPerpendicularDistance = (point: Vec2, lineStart: Vec2, lineEnd: Vec2): number => {
+const getPerpendicularDistance = (
+  point: Vec2,
+  lineStart: Vec2,
+  lineEnd: Vec2,
+): number => {
   const { x, y } = point
   const { x: x1, y: y1 } = lineStart
   const { x: x2, y: y2 } = lineEnd
@@ -17,14 +21,21 @@ const getPerpendicularDistance = (point: Vec2, lineStart: Vec2, lineEnd: Vec2): 
   return numerator / denominator
 }
 
-export const ramerDouglasPeucker = (points: Vec2[], epsilon: number): Vec2[] => {
+export const ramerDouglasPeucker = (
+  points: Vec2[],
+  epsilon: number,
+): Vec2[] => {
   if (points.length < 3) return points
 
   let maxDistance = 0
   let index = 0
 
   for (let i = 1; i < points.length - 1; i += 1) {
-    const distance = getPerpendicularDistance(points[i], points[0], points[points.length - 1])
+    const distance = getPerpendicularDistance(
+      points[i],
+      points[0],
+      points[points.length - 1],
+    )
     if (distance > maxDistance) {
       index = i
       maxDistance = distance
