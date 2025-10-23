@@ -76,7 +76,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-toolbar-06, T-store-01
   - Estimate: 60
 
-- [ ] T-line-11: Line tool (60m)
+- [x] T-line-11: Line tool (60m)
   - Goal: Polyline creation; drag/click adds points; finalize on double-click/Enter.
   - Files/paths: `src/canvas/controllers/LineController.ts`, `src/types/shapes.ts`
   - Key edits: Points array, tolerance for selection; commit lifecycle.
@@ -111,14 +111,14 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-select-08, T-rect-09, T-ellipse-10, T-line-11
   - Estimate: 75
 
-- [ ] T-text-16: Text tool with inline editor (90m)
+- [x] T-text-16: Text tool with inline editor (90m)
   - Goal: Create text box; enter inline edit; apply styles.
   - Files/paths: `src/canvas/controllers/TextController.ts`, `src/ui/TextEditor.tsx`, `src/types/shapes.ts`
   - Key edits: Editor overlay, commit on blur/Enter, handle wrapping in box.
   - Dependencies: T-toolbar-06, T-context-15
   - Estimate: 90
 
-- [ ] T-text-style-17: Text measurement cache and styling controls (75m)
+- [x] T-text-style-17: Text measurement cache and styling controls (75m)
   - Goal: Cache measurements per font/style; controls for family/weight/size/letter/line/align/italic/underline/shadow.
   - Files/paths: `src/utils/textMeasure.ts`, `src/ui/Toolbar.tsx`, `src/ui/ContextPanel.tsx`
   - Key edits: Cache map, invalidation rules, style bindings.

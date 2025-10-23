@@ -62,6 +62,7 @@ import {
   beginPolyline,
   cancelPolyline,
   finalizePolyline,
+  commitPolylinePoint,
   updatePolyline,
   type PolylineState,
 } from './controllers/polyline-controller'
@@ -590,6 +591,20 @@ export const CanvasViewport = () => {
         }
       }
 
+      if (event.code === 'Enter' && polylineState.current) {
+        const state = polylineState.current
+        if (state.pointerId != null) {
+          const node = containerRef.current
+          if (node && node.hasPointerCapture(state.pointerId)) {
+            node.releasePointerCapture(state.pointerId)
+          }
+        }
+        finalizePolyline(state)
+        polylineState.current = null
+        event.preventDefault()
+        return
+      }
+
       handleKeyDown(event)
     }
 
@@ -664,10 +679,24 @@ export const CanvasViewport = () => {
     }
 
     if (activeTool === 'line' || activeTool === 'arrow') {
-      const state = beginPolyline(activeTool, worldPoint, event.pointerId)
-      polylineState.current = state
-      updatePolyline(state, worldPoint)
-      node.setPointerCapture(event.pointerId)
+      const state = polylineState.current
+      if (!state || state.locked) {
+        const nextState = beginPolyline(activeTool, worldPoint, event.pointerId)
+        polylineState.current = nextState
+        node.setPointerCapture(event.pointerId)
+        updatePolyline(nextState, worldPoint, { force: true })
+      } else if (event.detail >= 2) {
+        if (state.pointerId !== null && node.hasPointerCapture(state.pointerId)) {
+          node.releasePointerCapture(state.pointerId)
+        }
+        state.pointerId = null
+        finalizePolyline(state)
+        polylineState.current = null
+      } else {
+        state.pointerId = event.pointerId
+        updatePolyline(state, worldPoint, { force: true })
+        node.setPointerCapture(event.pointerId)
+      }
       event.preventDefault()
       return
     }
@@ -1052,11 +1081,10 @@ export const CanvasViewport = () => {
       containerRef.current?.hasPointerCapture(event.pointerId)
     ) {
       const state = polylineState.current
-      polylineState.current = null
-      containerRef.current.releasePointerCapture(event.pointerId)
-
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
+      const node = containerRef.current
+      if (node) {
+        node.releasePointerCapture(event.pointerId)
+        const rect = node.getBoundingClientRect()
         const worldPoint = screenPointToWorld(
           {
             x: event.clientX - rect.left,
@@ -1064,23 +1092,9 @@ export const CanvasViewport = () => {
           },
           useAppStore.getState().viewport,
         )
-        state.points[state.points.length - 1] = worldPoint
-        updatePolyline(state, worldPoint)
+        commitPolylinePoint(state, worldPoint)
+        state.pointerId = null
       }
-
-      if (
-        state.points.length <= 1 ||
-        (state.points.length === 2 &&
-          Math.hypot(
-            state.points[1].x - state.points[0].x,
-            state.points[1].y - state.points[0].y,
-          ) < 2)
-      ) {
-        cancelPolyline(state)
-      } else {
-        finalizePolyline(state)
-      }
-
       event.preventDefault()
       return
     }
