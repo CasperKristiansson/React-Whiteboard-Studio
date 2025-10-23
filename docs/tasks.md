@@ -132,7 +132,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-transform-14
   - Estimate: 90
 
-- [ ] T-guides-19: Alignment guides overlay (60m)
+- [x] T-guides-19: Alignment guides overlay (60m)
   - Goal: Render guides and distances when snapping; toggleable.
   - Files/paths: `src/canvas/overlays/GuidesOverlay.tsx`, `src/services/snap.ts`
   - Key edits: Guide lines rendering, distance labels.
@@ -174,7 +174,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-export-21, T-assets-20
   - Estimate: 60
 
-- [ ] T-persist-25: Dexie schema + migrations + adapter (90m)
+- [x] T-persist-25: Dexie schema + migrations + adapter (90m)
   - Goal: Dexie DB with `projects`, `documents`, `assets`; versioned migrations.
   - Files/paths: `src/persistence/db.ts`, `src/persistence/adapter.ts`
   - Key edits: Table schemas, open/upgrade, API for save/load/list.
