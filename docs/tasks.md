@@ -181,7 +181,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-store-01
   - Estimate: 90
 
-- [ ] T-persist-26: Autosave debounce + dirty flag (45m)
+- [x] T-persist-26: Autosave debounce + dirty flag (45m)
   - Goal: 500 ms debounced autosave on idle; robust to frequent edits.
   - Files/paths: `src/persistence/autosave.ts`, `src/state/store.ts`
   - Key edits: Debounce utility, save triggers, error surface.

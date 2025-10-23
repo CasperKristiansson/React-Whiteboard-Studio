@@ -12,6 +12,7 @@ import {
   useAppStore,
 } from './state/store'
 import type { ThemePreference } from './types'
+import { usePersistence } from './state/persistence'
 
 const THEME_STORAGE_KEY = 'draw.theme'
 
@@ -24,6 +25,7 @@ function App() {
   const setTheme = useAppStore((state) => state.setTheme)
 
   useKeyboardShortcuts()
+  usePersistence()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
