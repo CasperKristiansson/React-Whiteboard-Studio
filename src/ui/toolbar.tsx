@@ -1,5 +1,21 @@
 import clsx from 'clsx'
 import { useCallback, useMemo, type ChangeEvent } from 'react'
+import type { IconType } from 'react-icons'
+import {
+  LuPointer,
+  LuSquare,
+  LuCircle,
+  LuPenLine,
+  LuArrowUpRight,
+  LuPenTool,
+  LuType,
+  LuImage,
+  LuItalic,
+  LuUnderline,
+  LuAlignLeft,
+  LuAlignCenter,
+  LuAlignRight,
+} from 'react-icons/lu'
 
 import type { Tool } from '../state/store'
 import {
@@ -12,27 +28,29 @@ import {
 import type { TextShape } from '../types'
 import { updateTextShapeBounds } from '../utils/text-measure'
 
-const TOOL_OPTIONS: { value: Tool; label: string; shortcut: string }[] = [
-  { value: 'select', label: 'Select', shortcut: 'V' },
-  { value: 'rect', label: 'Rectangle', shortcut: 'R' },
-  { value: 'ellipse', label: 'Ellipse', shortcut: 'O' },
-  { value: 'line', label: 'Line', shortcut: 'L' },
-  { value: 'arrow', label: 'Arrow', shortcut: 'A' },
-  { value: 'path', label: 'Path', shortcut: 'P' },
-  { value: 'text', label: 'Text', shortcut: 'T' },
-  { value: 'image', label: 'Image', shortcut: 'I' },
+const TOOL_OPTIONS: { value: Tool; label: string; shortcut: string; icon: IconType }[] = [
+  { value: 'select', label: 'Select', shortcut: 'V', icon: LuPointer },
+  { value: 'rect', label: 'Rectangle', shortcut: 'R', icon: LuSquare },
+  { value: 'ellipse', label: 'Ellipse', shortcut: 'O', icon: LuCircle },
+  { value: 'line', label: 'Line', shortcut: 'L', icon: LuPenLine },
+  { value: 'arrow', label: 'Arrow', shortcut: 'A', icon: LuArrowUpRight },
+  { value: 'path', label: 'Path', shortcut: 'P', icon: LuPenTool },
+  { value: 'text', label: 'Text', shortcut: 'T', icon: LuType },
+  { value: 'image', label: 'Image', shortcut: 'I', icon: LuImage },
 ]
 
 const ToolbarButton = ({
   value,
   label,
   shortcut,
+  icon: Icon,
   active,
   onSelect,
 }: {
   value: Tool
   label: string
   shortcut: string
+  icon: IconType
   active: boolean
   onSelect: (tool: Tool) => void
 }) => {
@@ -40,7 +58,7 @@ const ToolbarButton = ({
     <button
       type="button"
       className={clsx(
-        'flex flex-col items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+        'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
         active
           ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
           : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
@@ -49,12 +67,9 @@ const ToolbarButton = ({
       aria-label={`${label} tool (${shortcut})`}
       onClick={() => onSelect(value)}
     >
-      <span className="text-sm">{label}</span>
-      <kbd
-        className={clsx(
-          'rounded bg-(--color-accent)/10 px-1 text-[0.7rem] text-(--color-accent)',
-        )}
-      >
+      <Icon className="h-4 w-4" />
+      <span className="font-medium">{label}</span>
+      <kbd className="ml-auto rounded bg-(--color-accent)/10 px-1 text-[0.7rem] text-(--color-accent)">
         {shortcut}
       </kbd>
     </button>
@@ -241,6 +256,7 @@ const Toolbar = () => {
           value={tool.value}
           label={tool.label}
           shortcut={tool.shortcut}
+          icon={tool.icon}
           active={tool.value === activeTool}
           onSelect={setTool}
         />
@@ -335,43 +351,64 @@ const Toolbar = () => {
             <button
               type="button"
               className={clsx(
-                'rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                'flex items-center gap-2 rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
                 sharedItalic
                   ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text)'
                   : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text)',
               )}
               onClick={handleItalicToggle}
             >
-              Italic{italicMixed ? ' (mixed)' : ''}
+              <LuItalic className="h-3.5 w-3.5" /> Italic{italicMixed ? ' (mixed)' : ''}
             </button>
             <button
               type="button"
               className={clsx(
-                'rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                'flex items-center gap-2 rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
                 sharedUnderline
                   ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text)'
                   : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text)',
               )}
               onClick={handleUnderlineToggle}
             >
-              Underline{underlineMixed ? ' (mixed)' : ''}
+              <LuUnderline className="h-3.5 w-3.5" /> Underline{underlineMixed ? ' (mixed)' : ''}
             </button>
             <div className="flex items-center gap-1">
-              {(['left', 'center', 'right'] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={clsx(
-                    'rounded border px-2 py-1 text-xs font-medium capitalize transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
-                    alignValue === value
-                      ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text)'
-                      : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text)',
-                  )}
-                  onClick={() => handleAlignChange(value)}
-                >
-                  {value}
-                </button>
-              ))}
+              <button
+                type="button"
+                className={clsx(
+                  'flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                  alignValue === 'left'
+                    ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text)'
+                    : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text)',
+                )}
+                onClick={() => handleAlignChange('left')}
+              >
+                <LuAlignLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className={clsx(
+                  'flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                  alignValue === 'center'
+                    ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text)'
+                    : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text)',
+                )}
+                onClick={() => handleAlignChange('center')}
+              >
+                <LuAlignCenter className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className={clsx(
+                  'flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
+                  alignValue === 'right'
+                    ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text)'
+                    : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text)',
+                )}
+                onClick={() => handleAlignChange('right')}
+              >
+                <LuAlignRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
         </div>

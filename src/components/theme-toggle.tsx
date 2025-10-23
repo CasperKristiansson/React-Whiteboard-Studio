@@ -1,10 +1,15 @@
 import { selectTheme, useAppSelector, useAppStore } from '../state/store'
 import type { ThemePreference } from '../types'
+import { LuMonitorSmartphone, LuSun, LuMoon } from 'react-icons/lu'
 
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+const THEME_OPTIONS = [
+  {
+    value: 'system' as ThemePreference,
+    label: 'System',
+    Icon: LuMonitorSmartphone,
+  },
+  { value: 'light' as ThemePreference, label: 'Light', Icon: LuSun },
+  { value: 'dark' as ThemePreference, label: 'Dark', Icon: LuMoon },
 ]
 
 const getButtonClassName = (active: boolean) => {
@@ -26,6 +31,7 @@ const ThemeToggle = () => {
     <div className="flex items-center gap-1 rounded-full border border-(--color-elevated-border) bg-(--color-elevated-bg) px-1 py-1">
       {THEME_OPTIONS.map((option) => {
         const active = option.value === theme
+        const Icon = option.Icon
         return (
           <button
             key={option.value}
@@ -34,7 +40,10 @@ const ThemeToggle = () => {
             onClick={() => setTheme(option.value)}
             aria-pressed={active}
           >
-            {option.label}
+            <span className="mr-1 inline-flex items-center gap-1">
+              <Icon className="h-4 w-4" />
+              {option.label}
+            </span>
           </button>
         )
       })}

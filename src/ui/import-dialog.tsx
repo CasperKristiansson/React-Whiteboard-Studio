@@ -8,6 +8,7 @@ import {
 } from '../state/store'
 import { useErrorStore } from '../state/error'
 import { toAppError } from '../errors'
+import { LuUpload } from 'react-icons/lu'
 
 const ImportDialog = () => {
   const projectId = useAppSelector(selectProjectId)
@@ -69,9 +70,10 @@ const ImportDialog = () => {
         <button
           type="button"
           onClick={handleTrigger}
-          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
           disabled={!projectId || isImporting}
         >
+          <LuUpload className="h-4 w-4" />
           {isImporting ? 'Importing…' : 'Import .wb.json'}
         </button>
         <input

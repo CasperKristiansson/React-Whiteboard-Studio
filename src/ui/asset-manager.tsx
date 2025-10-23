@@ -6,6 +6,7 @@ import { createShapeId } from '../state/store'
 import { DEFAULT_STROKE } from '../types/shapes'
 import { useErrorStore } from '../state/error'
 import { toAppError } from '../errors'
+import { LuUpload, LuMoveRight, LuLayers } from 'react-icons/lu'
 
 type AssetPreview = {
   id: string
@@ -171,15 +172,18 @@ const AssetManager = () => {
     <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow"> 
       <header className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-(--color-app-foreground)">Assets</h2>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-(--color-app-foreground)">
+            <LuLayers className="h-4 w-4" /> Assets
+          </h2>
           <p className="text-xs text-(--color-muted-foreground)">Import images for reuse across the project.</p>
         </div>
         <button
           type="button"
           onClick={handleUploadClick}
-          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
           disabled={!projectId || isUploading}
         >
+          <LuUpload className="h-4 w-4" />
           {isUploading ? 'Uploading…' : 'Import images'}
         </button>
         <input
@@ -212,10 +216,11 @@ const AssetManager = () => {
                 </div>
                 <button
                   type="button"
-                  className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-2 py-1 text-xs font-medium text-(--color-button-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                  className="flex items-center justify-center gap-1 rounded border border-(--color-button-border) bg-(--color-button-bg) px-2 py-1 text-xs font-medium text-(--color-button-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
                   onClick={() => handleInsert(asset)}
                 >
-                  Insert onto canvas
+                  <LuMoveRight className="h-4 w-4" />
+                  Insert
                 </button>
               </div>
             </li>

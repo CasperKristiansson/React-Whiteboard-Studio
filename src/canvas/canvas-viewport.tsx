@@ -13,6 +13,7 @@ import {
   screenPointToWorld,
   worldPointToScreen,
 } from './transform'
+import { LuGrid2X2, LuMagnet } from 'react-icons/lu'
 import {
   MAX_ZOOM,
   MIN_ZOOM,
@@ -1436,21 +1437,21 @@ export const CanvasViewport = () => {
         <button
           type="button"
           onClick={() => setSettings({ gridVisible: !settings.gridVisible })}
-          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
           aria-pressed={settings.gridVisible}
           aria-label={settings.gridVisible ? 'Hide grid' : 'Show grid'}
         >
+          <LuGrid2X2 className="h-4 w-4" />
           {settings.gridVisible ? 'Hide grid' : 'Show grid'}
         </button>
         <button
           type="button"
           onClick={() => setSettings({ snapEnabled: !settings.snapEnabled })}
-          className="rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+          className="flex items-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
           aria-pressed={settings.snapEnabled}
-          aria-label={
-            settings.snapEnabled ? 'Disable snapping' : 'Enable snapping'
-          }
+          aria-label={settings.snapEnabled ? 'Disable snapping' : 'Enable snapping'}
         >
+          <LuMagnet className="h-4 w-4" />
           {settings.snapEnabled ? 'Snap on' : 'Snap off'}
         </button>
       </div>
