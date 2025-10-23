@@ -153,7 +153,7 @@ Scenario: Zoom clamps within supported range
 AC-pan-01
 
 ```
-Scenario: Pan with Space + drag
+Scenario: Pan with Cmd/Ctrl + drag
   Given the Select tool is active
   And the user holds Space
   When the user drags on the canvas

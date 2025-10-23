@@ -8,6 +8,7 @@ import {
   LuMagnet,
   LuPencil,
   LuPlus,
+  LuRefreshCcw,
   LuTrash2,
 } from 'react-icons/lu'
 
@@ -397,6 +398,13 @@ const TopNavigation = () => {
 
   const settings = useAppSelector(selectSettings)
   const setSettings = useAppStore((state) => state.setSettings)
+  const setViewport = useAppStore((state) => state.setViewport)
+  const isMacPlatform =
+    typeof navigator !== 'undefined' &&
+    /Mac|iP(hone|od|ad)/i.test(navigator.platform ?? navigator.userAgent)
+  const gridShortcutLabel = isMacPlatform ? '⌘⇧G' : 'Ctrl+Shift+G'
+  const snapShortcutLabel = isMacPlatform ? '⌘⇧S' : 'Ctrl+Shift+S'
+  const resetShortcutLabel = isMacPlatform ? '⌘0' : 'Ctrl+0'
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -506,8 +514,9 @@ const TopNavigation = () => {
                   <LuGrid2X2 className="h-4 w-4" />
                   Grid
                 </span>
-                <span className="text-xs text-(--color-muted-foreground)">
-                  {settings.gridVisible ? 'On' : 'Off'}
+                <span className="flex items-center gap-2 text-xs text-(--color-muted-foreground)">
+                  <span>{settings.gridVisible ? 'On' : 'Off'}</span>
+                  <span className="font-mono">{gridShortcutLabel}</span>
                 </span>
               </button>
               <button
@@ -527,8 +536,23 @@ const TopNavigation = () => {
                   <LuMagnet className="h-4 w-4" />
                   Snap
                 </span>
-                <span className="text-xs text-(--color-muted-foreground)">
-                  {settings.snapEnabled ? 'On' : 'Off'}
+                <span className="flex items-center gap-2 text-xs text-(--color-muted-foreground)">
+                  <span>{settings.snapEnabled ? 'On' : 'Off'}</span>
+                  <span className="font-mono">{snapShortcutLabel}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="flex items-center justify-between gap-3 rounded-xl border border-(--color-elevated-border) bg-(--color-button-bg) px-3 py-2 text-sm font-medium text-(--color-button-muted-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+                onClick={() => setViewport({ x: 0, y: 0, scale: 1 })}
+              >
+                <span className="flex items-center gap-2">
+                  <LuRefreshCcw className="h-4 w-4" />
+                  Reset view
+                </span>
+                <span className="flex items-center gap-2 text-xs text-(--color-muted-foreground)">
+                  <span>100%</span>
+                  <span className="font-mono">{resetShortcutLabel}</span>
                 </span>
               </button>
             </section>

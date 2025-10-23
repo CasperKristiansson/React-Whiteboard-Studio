@@ -211,7 +211,6 @@ export const useAppStore = create<AppStore>()(
 
     setViewport: (update) => {
       set((state) => {
-        captureHistorySnapshot(state)
         const nextScale =
           update.scale !== undefined
             ? clamp(update.scale, MIN_ZOOM, MAX_ZOOM)

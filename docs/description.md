@@ -124,7 +124,7 @@ type ProjectMeta = {
 
 ## Interaction model
 
-- **Pan**: Space + drag. Trackpad two-finger drag.
+- **Pan**: Cmd (Mac) / Ctrl (Windows) + drag. Trackpad two-finger drag.
 - **Zoom**: Ctrl/Cmd + wheel. Pinch gesture. Zoom to cursor. Fit selection.
 - **Select**: Click or marquee. Shift adds/removes.
 - **Transform**: Drag to move. Handles for resize with aspect-lock (Shift). Rotate handle with snap (15°).

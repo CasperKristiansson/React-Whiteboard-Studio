@@ -285,7 +285,7 @@ export const CanvasViewport = () => {
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pointerState = useRef<PointerState>({ ...initialPointerState })
-  const spacePressed = useRef(false)
+  const panModifierPressed = useRef(false)
   const commitTimer = useRef<number | undefined>(undefined)
   const selectionSession = useRef<{
     active: boolean
@@ -306,6 +306,10 @@ export const CanvasViewport = () => {
   const [editingTextId, setEditingTextId] = useState<string | null>(null)
   const updateShape = useAppStore((state) => state.updateShape)
   const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([])
+  const isMacPlatform =
+    typeof navigator !== 'undefined' &&
+    /Mac|iP(hone|od|ad)/i.test(navigator.platform ?? navigator.userAgent)
+  const panShortcutLabel = isMacPlatform ? '⌘ + drag' : 'Ctrl + drag'
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -536,20 +540,16 @@ export const CanvasViewport = () => {
   )
 
   useEffect(() => {
+    const panKeyCodes = new Set(
+      isMacPlatform ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
+    )
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code !== 'Space') return
-      if (isTextInput(event.target)) return
-      if (spacePressed.current) return
-      spacePressed.current = true
-      event.preventDefault()
-    }
+      if (panKeyCodes.has(event.code)) {
+        if (isTextInput(event.target)) return
+        panModifierPressed.current = true
+      }
 
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.code !== 'Space') return
-      spacePressed.current = false
-    }
-
-    const handleKeyDownWithEscape = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
         if (rectState.current) {
           cancelRect(rectState.current)
@@ -620,18 +620,28 @@ export const CanvasViewport = () => {
         event.preventDefault()
         return
       }
-
-      handleKeyDown(event)
     }
 
-    window.addEventListener('keydown', handleKeyDownWithEscape, true)
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (panKeyCodes.has(event.code)) {
+        panModifierPressed.current = false
+      }
+    }
+
+    const handleWindowBlur = () => {
+      panModifierPressed.current = false
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
     window.addEventListener('keyup', handleKeyUp, true)
+    window.addEventListener('blur', handleWindowBlur)
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDownWithEscape, true)
+      window.removeEventListener('keydown', handleKeyDown, true)
       window.removeEventListener('keyup', handleKeyUp, true)
+      window.removeEventListener('blur', handleWindowBlur)
     }
-  }, [])
+  }, [isMacPlatform])
 
   const endPan = useCallback(
     (label: string) => {
@@ -731,10 +741,11 @@ export const CanvasViewport = () => {
       return
     }
 
-    const shouldPan =
-      spacePressed.current ||
-      event.pointerType === 'touch' ||
-      activeTool !== 'select'
+    const modifierHeld =
+      panModifierPressed.current ||
+      event.metaKey ||
+      (!isMacPlatform && event.ctrlKey)
+    const shouldPan = modifierHeld || event.pointerType === 'touch' || activeTool !== 'select'
 
     if (shouldPan) {
       node.setPointerCapture(event.pointerId)
@@ -1419,7 +1430,7 @@ export const CanvasViewport = () => {
 
       <div className="pointer-events-none absolute inset-0 grid place-items-center text-(--color-muted-foreground)">
         <p className="text-sm font-medium">
-          Canvas viewport placeholder – pan with Space + drag, zoom with
+          Canvas viewport placeholder – pan with {panShortcutLabel}, zoom with
           pinch/ctrl+wheel.
         </p>
       </div>

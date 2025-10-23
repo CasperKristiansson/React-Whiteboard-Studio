@@ -3,8 +3,8 @@
 Use this suite to manually verify every major feature after automated work completes.
 
 ## Canvas Basics
-- [ ] Launch the app; confirm toolbar, context panel, asset manager, project manager, and export/import sections render without console errors.
-- [ ] Pan with space + drag, trackpad gestures, and mouse wheel; confirm zoom snaps to cursor and clamps between 10%–1600%.
+- [x] Launch the app; confirm toolbar, context panel, asset manager, project manager, and export/import sections render without console errors.
+- [x] Pan with Cmd/Ctrl + drag, trackpad gestures, and mouse wheel; confirm zoom snaps to cursor and clamps between 10%–1600%.
 - [ ] Toggle grid and snap controls; ensure settings persist after page refresh.
 - [ ] Enable `?debug` query flag; confirm debug overlay displays fps, counts, and live data.
 

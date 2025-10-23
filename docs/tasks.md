@@ -273,7 +273,7 @@ This plan converts the approved requirements and design into small, reversible t
   - [ ] Zoom-to-cursor works for wheel/pinch
 
 - [ ] AC-pan-01 — Verifier: Dev
-  - [ ] Space + drag pans viewport
+  - [ ] Cmd/Ctrl + drag pans viewport
   - [ ] Trackpad two-finger drag pans viewport
 
 - [ ] AC-tools-01 — Verifier: Dev

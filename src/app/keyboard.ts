@@ -63,6 +63,24 @@ export const useKeyboardShortcuts = () => {
           }
           return
         }
+
+        if (event.shiftKey && key === 'g') {
+          event.preventDefault()
+          store.setSettings({ gridVisible: !store.settings.gridVisible })
+          return
+        }
+
+        if (event.shiftKey && key === 's') {
+          event.preventDefault()
+          store.setSettings({ snapEnabled: !store.settings.snapEnabled })
+          return
+        }
+
+        if (!event.shiftKey && key === '0') {
+          event.preventDefault()
+          store.setViewport({ x: 0, y: 0, scale: 1 })
+          return
+        }
       }
 
       if (!event.metaKey && !event.ctrlKey && !event.altKey) {
