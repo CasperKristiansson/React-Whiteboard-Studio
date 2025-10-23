@@ -24,7 +24,7 @@ import {
   useAppSelector,
   useAppStore,
 } from '../state/store'
-import type { Shape, Vec2 } from '../types'
+import type { Shape, TextShape, Vec2 } from '../types'
 import GridLayer from './layers/grid-layer'
 import SelectionOverlay, {
   type ScreenRect,
@@ -72,6 +72,13 @@ import {
   updatePath,
   type PathState,
 } from './controllers/path-controller'
+import {
+  beginText,
+  cancelText as cancelTextShape,
+  finalizeText,
+  type TextCreationState,
+} from './controllers/text-controller'
+import TextEditor from '../ui/text-editor'
 
 const PAN_COMMIT_DELAY = 120
 const MIN_SCALE_SIZE = 4
@@ -278,6 +285,9 @@ export const CanvasViewport = () => {
   const polylineState = useRef<PolylineState | null>(null)
   const pathState = useRef<PathState | null>(null)
   const transformState = useRef<TransformState | null>(null)
+  const pendingTextState = useRef<TextCreationState | null>(null)
+  const [editingTextId, setEditingTextId] = useState<string | null>(null)
+  const updateShape = useAppStore((state) => state.updateShape)
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -318,13 +328,65 @@ export const CanvasViewport = () => {
       viewport,
     )
 
+  return {
+    x: Math.min(topLeft.x, bottomRight.x),
+    y: Math.min(topLeft.y, bottomRight.y),
+    width: Math.abs(bottomRight.x - topLeft.x),
+    height: Math.abs(bottomRight.y - topLeft.y),
+  }
+}, [selectionWorldBounds, viewport])
+
+  const editingTextShape = useMemo<TextShape | null>(() => {
+    if (!editingTextId) return null
+    const target = shapes.find((shape) => shape.id === editingTextId)
+    return target && target.type === 'text' ? target : null
+  }, [editingTextId, shapes])
+
+  const textEditorBounds = useMemo(() => {
+    if (!editingTextShape) return null
+    const topLeft = worldPointToScreen(
+      { x: editingTextShape.position.x, y: editingTextShape.position.y },
+      viewport,
+    )
+    const bottomRight = worldPointToScreen(
+      {
+        x: editingTextShape.position.x + editingTextShape.box.x,
+        y: editingTextShape.position.y + editingTextShape.box.y,
+      },
+      viewport,
+    )
+
     return {
-      x: Math.min(topLeft.x, bottomRight.x),
-      y: Math.min(topLeft.y, bottomRight.y),
+      left: Math.min(topLeft.x, bottomRight.x),
+      top: Math.min(topLeft.y, bottomRight.y),
       width: Math.abs(bottomRight.x - topLeft.x),
       height: Math.abs(bottomRight.y - topLeft.y),
     }
-  }, [selectionWorldBounds, viewport])
+  }, [editingTextShape, viewport])
+
+  const handleTextChange = useCallback(
+    (value: string) => {
+      if (!editingTextShape) return
+      updateShape(editingTextShape.id, (shape) => {
+        if (shape.type === 'text') {
+          shape.text = value
+        }
+      })
+    },
+    [editingTextShape, updateShape],
+  )
+
+  const handleTextCommit = useCallback(() => {
+    if (!editingTextId) return
+    finalizeText(editingTextId)
+    setEditingTextId(null)
+  }, [editingTextId])
+
+  const handleTextCancel = useCallback(() => {
+    if (!editingTextId) return
+    cancelTextShape(editingTextId)
+    setEditingTextId(null)
+  }, [editingTextId])
 
   const handleSelectionMovePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -556,6 +618,13 @@ export const CanvasViewport = () => {
     const node = containerRef.current
     if (!node) return
 
+    if (editingTextId) {
+      finalizeText(editingTextId)
+      setEditingTextId(null)
+      event.preventDefault()
+      return
+    }
+
     const rect = node.getBoundingClientRect()
     const screenPoint = {
       x: event.clientX - rect.left,
@@ -565,6 +634,14 @@ export const CanvasViewport = () => {
       screenPoint,
       useAppStore.getState().viewport,
     )
+
+    if (activeTool === 'text') {
+      const state = beginText(worldPoint, event.pointerId)
+      pendingTextState.current = state
+      node.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      return
+    }
 
     if (activeTool === 'rect') {
       const state = beginRect(worldPoint, event.pointerId)
@@ -826,6 +903,22 @@ export const CanvasViewport = () => {
   }
 
   const handlePointerUp: PointerEventHandler<HTMLDivElement> = (event) => {
+    if (
+      pendingTextState.current &&
+      pendingTextState.current.pointerId === event.pointerId &&
+      containerRef.current?.hasPointerCapture(event.pointerId)
+    ) {
+      const state = pendingTextState.current
+      pendingTextState.current = null
+      const node = containerRef.current
+      if (node) {
+        node.releasePointerCapture(event.pointerId)
+      }
+      setEditingTextId(state.id)
+      event.preventDefault()
+      return
+    }
+
     const transform = transformState.current
     if (
       transform &&
@@ -1082,6 +1175,16 @@ export const CanvasViewport = () => {
     }
 
     if (
+      pendingTextState.current &&
+      pendingTextState.current.pointerId === event.pointerId &&
+      containerRef.current?.hasPointerCapture(event.pointerId)
+    ) {
+      containerRef.current.releasePointerCapture(event.pointerId)
+      cancelTextShape(pendingTextState.current.id)
+      pendingTextState.current = null
+    }
+
+    if (
       rectState.current &&
       rectState.current.pointerId === event.pointerId &&
       containerRef.current?.hasPointerCapture(event.pointerId)
@@ -1198,6 +1301,17 @@ export const CanvasViewport = () => {
         onHandlePointerDown={handleSelectionHandlePointerDown}
         onRotatePointerDown={handleSelectionRotatePointerDown}
       />
+
+      {editingTextShape && textEditorBounds ? (
+        <TextEditor
+          shape={editingTextShape}
+          bounds={textEditorBounds}
+          scale={viewport.scale}
+          onChange={handleTextChange}
+          onCommit={handleTextCommit}
+          onCancel={handleTextCancel}
+        />
+      ) : null}
 
       <div className="pointer-events-none absolute inset-0 grid place-items-center text-(--color-muted-foreground)">
         <p className="text-sm font-medium">
