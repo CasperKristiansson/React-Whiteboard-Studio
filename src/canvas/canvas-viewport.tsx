@@ -280,6 +280,53 @@ export const CanvasViewport = () => {
   const pathState = useRef<PathState | null>(null);
   const transformState = useRef<TransformState | null>(null);
 
+  const selectedShapes = useMemo<Shape[]>(
+    () => shapes.filter((shape) => selectionIds.includes(shape.id)),
+    [shapes, selectionIds]
+  );
+
+  const selectionWorldBounds = useMemo<ShapeBounds | null>(() => {
+    if (!selectedShapes.length) return null;
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    selectedShapes.forEach((shape) => {
+      const bounds = getShapeBounds(shape);
+      if (bounds.minX < minX) minX = bounds.minX;
+      if (bounds.minY < minY) minY = bounds.minY;
+      if (bounds.maxX > maxX) maxX = bounds.maxX;
+      if (bounds.maxY > maxY) maxY = bounds.maxY;
+    });
+
+    if (!Number.isFinite(minX) || !Number.isFinite(maxX)) {
+      return null;
+    }
+
+    return { minX, minY, maxX, maxY };
+  }, [selectedShapes]);
+
+  const selectionScreenBounds = useMemo<ScreenRect | null>(() => {
+    if (!selectionWorldBounds) return null;
+    const topLeft = worldPointToScreen(
+      { x: selectionWorldBounds.minX, y: selectionWorldBounds.minY },
+      viewport
+    );
+    const bottomRight = worldPointToScreen(
+      { x: selectionWorldBounds.maxX, y: selectionWorldBounds.maxY },
+      viewport
+    );
+
+    return {
+      x: Math.min(topLeft.x, bottomRight.x),
+      y: Math.min(topLeft.y, bottomRight.y),
+      width: Math.abs(bottomRight.x - topLeft.x),
+      height: Math.abs(bottomRight.y - topLeft.y),
+    };
+  }, [selectionWorldBounds, viewport]);
+
   const handleSelectionMovePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (!selectionWorldBounds || !selectedShapes.length) return;
@@ -396,53 +443,6 @@ export const CanvasViewport = () => {
     },
     [selectedShapes, selectionWorldBounds]
   );
-
-  const selectedShapes = useMemo<Shape[]>(
-    () => shapes.filter((shape) => selectionIds.includes(shape.id)),
-    [shapes, selectionIds]
-  );
-
-  const selectionWorldBounds = useMemo<ShapeBounds | null>(() => {
-    if (!selectedShapes.length) return null;
-
-    let minX = Number.POSITIVE_INFINITY;
-    let minY = Number.POSITIVE_INFINITY;
-    let maxX = Number.NEGATIVE_INFINITY;
-    let maxY = Number.NEGATIVE_INFINITY;
-
-    selectedShapes.forEach((shape) => {
-      const bounds = getShapeBounds(shape);
-      if (bounds.minX < minX) minX = bounds.minX;
-      if (bounds.minY < minY) minY = bounds.minY;
-      if (bounds.maxX > maxX) maxX = bounds.maxX;
-      if (bounds.maxY > maxY) maxY = bounds.maxY;
-    });
-
-    if (!Number.isFinite(minX) || !Number.isFinite(maxX)) {
-      return null;
-    }
-
-    return { minX, minY, maxX, maxY };
-  }, [selectedShapes]);
-
-  const selectionScreenBounds = useMemo<ScreenRect | null>(() => {
-    if (!selectionWorldBounds) return null;
-    const topLeft = worldPointToScreen(
-      { x: selectionWorldBounds.minX, y: selectionWorldBounds.minY },
-      viewport
-    );
-    const bottomRight = worldPointToScreen(
-      { x: selectionWorldBounds.maxX, y: selectionWorldBounds.maxY },
-      viewport
-    );
-
-    return {
-      x: Math.min(topLeft.x, bottomRight.x),
-      y: Math.min(topLeft.y, bottomRight.y),
-      width: Math.abs(bottomRight.x - topLeft.x),
-      height: Math.abs(bottomRight.y - topLeft.y),
-    };
-  }, [selectionWorldBounds, viewport]);
 
   const scheduleCommit = useCallback(
     (label: string) => {

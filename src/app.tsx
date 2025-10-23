@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import CanvasViewport from './canvas/canvas-viewport'
 import { useKeyboardShortcuts } from './app/keyboard'
 import Toolbar from './ui/toolbar'
+import ContextPanel from './ui/context-panel'
 import ThemeToggle from './components/theme-toggle'
 import {
   selectActiveTool,
@@ -101,8 +102,11 @@ function App() {
             <Toolbar />
           </div>
 
-          <div className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-6 shadow-xl backdrop-blur">
-            <CanvasViewport />
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-6 shadow-xl backdrop-blur">
+              <CanvasViewport />
+            </div>
+            <ContextPanel />
           </div>
         </div>
       </div>

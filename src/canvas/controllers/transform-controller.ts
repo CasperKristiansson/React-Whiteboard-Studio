@@ -1,8 +1,7 @@
 import { useAppStore } from '../../state/store'
-import { getShapeBounds } from '../../services/geometry'
+import { getShapeBounds, type ShapeBounds } from '../../services/geometry'
 import type {
   Shape,
-  ShapeBounds,
   Vec2,
   RectShape,
   EllipseShape,
@@ -165,7 +164,7 @@ export const applyScale = (snapshot: TransformSnapshot, newBounds: ShapeBounds) 
     const clone = cloneShape(original)
     const scaledBounds = scaleBoundsOfShape(bounds, selectionBounds, newBounds)
 
-    switch (clone.type) {
+    switch (original.type) {
       case 'rect': {
         const rect = clone as RectShape
         rect.position = { x: scaledBounds.minX, y: scaledBounds.minY }
@@ -208,10 +207,11 @@ export const applyScale = (snapshot: TransformSnapshot, newBounds: ShapeBounds) 
       }
       case 'line':
       case 'arrow': {
+        const originalLine = original as LineShape | ArrowShape
         const line = clone as LineShape | ArrowShape
-        const originalWorldPoints = original.points.map((point) => ({
-          x: original.position.x + point.x,
-          y: original.position.y + point.y,
+        const originalWorldPoints = originalLine.points.map((point) => ({
+          x: originalLine.position.x + point.x,
+          y: originalLine.position.y + point.y,
         }))
         const newWorldPoints = originalWorldPoints.map((point) =>
           scaleWorldPoint(point, selectionBounds, newBounds),
@@ -230,10 +230,11 @@ export const applyScale = (snapshot: TransformSnapshot, newBounds: ShapeBounds) 
         break
       }
       case 'path': {
+        const originalPath = original as PathShape
         const path = clone as PathShape
-        const originalWorldPoints = original.d.map((point) => ({
-          x: original.position.x + point.x,
-          y: original.position.y + point.y,
+        const originalWorldPoints = originalPath.d.map((point) => ({
+          x: originalPath.position.x + point.x,
+          y: originalPath.position.y + point.y,
         }))
         const newWorldPoints = originalWorldPoints.map((point) =>
           scaleWorldPoint(point, selectionBounds, newBounds),
@@ -244,12 +245,6 @@ export const applyScale = (snapshot: TransformSnapshot, newBounds: ShapeBounds) 
           y: point.y - path.position.y,
         }))
         break
-      }
-      default: {
-        clone.position = {
-          x: clone.position.x,
-          y: clone.position.y,
-        }
       }
     }
 
@@ -277,7 +272,7 @@ export const applyRotation = (snapshot: TransformSnapshot, angle: number, center
   snapshot.shapes.forEach(({ id, original }) => {
     const clone = cloneShape(original)
 
-    switch (clone.type) {
+    switch (original.type) {
       case 'rect':
       case 'ellipse':
       case 'image':
@@ -288,10 +283,11 @@ export const applyRotation = (snapshot: TransformSnapshot, angle: number, center
       }
       case 'line':
       case 'arrow': {
+        const originalLine = original as LineShape | ArrowShape
         const line = clone as LineShape | ArrowShape
-        const originalWorldPoints = original.points.map((point) => ({
-          x: original.position.x + point.x,
-          y: original.position.y + point.y,
+        const originalWorldPoints = originalLine.points.map((point) => ({
+          x: originalLine.position.x + point.x,
+          y: originalLine.position.y + point.y,
         }))
         const rotatedPoints = originalWorldPoints.map((point) => rotatePoint(point, center, angle))
         line.position = { ...rotatedPoints[0] }
@@ -302,10 +298,11 @@ export const applyRotation = (snapshot: TransformSnapshot, angle: number, center
         break
       }
       case 'path': {
+        const originalPath = original as PathShape
         const path = clone as PathShape
-        const originalWorldPoints = original.d.map((point) => ({
-          x: original.position.x + point.x,
-          y: original.position.y + point.y,
+        const originalWorldPoints = originalPath.d.map((point) => ({
+          x: originalPath.position.x + point.x,
+          y: originalPath.position.y + point.y,
         }))
         const rotatedPoints = originalWorldPoints.map((point) => rotatePoint(point, center, angle))
         path.position = { ...rotatedPoints[0] }
@@ -315,8 +312,6 @@ export const applyRotation = (snapshot: TransformSnapshot, angle: number, center
         }))
         break
       }
-      default:
-        clone.position = { ...original.position }
     }
 
     store.updateShape(id, (shape) => {
