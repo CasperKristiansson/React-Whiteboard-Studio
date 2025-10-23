@@ -38,7 +38,10 @@ export const importImageAsset = async (
 
   const meta = await loadImageMetadata(file)
 
-  const assetId = crypto.randomUUID()
+  const assetId =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `asset-${Math.random().toString(36).slice(2)}-${Date.now()}`
 
   await putAsset({
     id: assetId,

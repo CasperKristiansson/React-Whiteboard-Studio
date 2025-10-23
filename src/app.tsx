@@ -6,6 +6,7 @@ import Toolbar from './ui/toolbar'
 import ContextPanel from './ui/context-panel'
 import ThemeToggle from './components/theme-toggle'
 import AssetManager from './ui/asset-manager'
+import ExportDialog from './ui/export-dialog'
 import {
   selectActiveTool,
   selectTheme,
@@ -118,6 +119,7 @@ function App() {
           </div>
 
           <AssetManager />
+          <ExportDialog />
         </div>
       </div>
     </main>

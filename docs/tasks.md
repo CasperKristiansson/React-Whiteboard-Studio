@@ -146,7 +146,7 @@ This plan converts the approved requirements and design into small, reversible t
   - Dependencies: T-persist-25
   - Estimate: 75
 
-- [ ] T-export-21: Export .wb.json (75m)
+- [x] T-export-21: Export .wb.json (75m)
   - Goal: Export document + inlined assets (data URLs) to .wb.json.
   - Files/paths: `src/export/json.ts`, `src/ui/ExportDialog.tsx`
   - Key edits: Serializer, data URL embedding, download.
