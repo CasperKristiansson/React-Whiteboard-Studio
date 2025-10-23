@@ -75,8 +75,7 @@ import {
 
 const PAN_COMMIT_DELAY = 120;
 const MIN_SCALE_SIZE = 4;
-const ROTATE_SNAP_STEP_DEGREES = 15;
-const ROTATE_SNAP_STEP_RADIANS = (Math.PI / 180) * ROTATE_SNAP_STEP_DEGREES;
+const ROTATE_SNAP_STEP_RADIANS = (Math.PI / 12);
 
 const snapRotationAngle = (angle: number, shouldSnap: boolean) =>
   shouldSnap
@@ -150,7 +149,7 @@ const computeScaledBounds = (
   pointer: Vec2,
   shiftKey: boolean
 ): ShapeBounds => {
-  let { minX, minY, maxX, maxY } = bounds;
+  const { minX, minY, maxX, maxY } = bounds;
 
   let newMinX = minX;
   let newMaxX = maxX;
@@ -861,12 +860,19 @@ export const CanvasViewport = () => {
           applyScale(transform.snapshot, newBounds);
           store.commit("Resize selection");
         } else {
-          const angle =
+          const rawAngle =
             Math.atan2(
               worldPoint.y - transform.center.y,
               worldPoint.x - transform.center.x
             ) - transform.startAngle;
-          applyRotation(transform.snapshot, angle, transform.center);
+          let finalAngle = rawAngle;
+          if (event.shiftKey) {
+            finalAngle = snapRotationAngle(rawAngle, true);
+          } else {
+            finalAngle = transform.currentAngle;
+          }
+          transform.currentAngle = finalAngle;
+          applyRotation(transform.snapshot, finalAngle, transform.center);
           store.commit("Rotate selection");
         }
 
