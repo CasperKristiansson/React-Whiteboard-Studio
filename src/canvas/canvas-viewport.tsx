@@ -261,6 +261,18 @@ export const CanvasViewport = () => {
   const commit = useAppStore((state) => state.commit)
   const select = useAppStore((state) => state.select)
   const clearSelection = useAppStore((state) => state.clearSelection)
+  const bringSelectionForward = useAppStore(
+    (state) => state.bringSelectionForward,
+  )
+  const sendSelectionBackward = useAppStore(
+    (state) => state.sendSelectionBackward,
+  )
+  const bringSelectionToFront = useAppStore(
+    (state) => state.bringSelectionToFront,
+  )
+  const sendSelectionToBack = useAppStore(
+    (state) => state.sendSelectionToBack,
+  )
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pointerState = useRef<PointerState>({ ...initialPointerState })
@@ -285,6 +297,7 @@ export const CanvasViewport = () => {
   const [editingTextId, setEditingTextId] = useState<string | null>(null)
   const updateShape = useAppStore((state) => state.updateShape)
   const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([])
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const isMacPlatform =
     typeof navigator !== 'undefined' &&
     /Mac|iP(hone|od|ad)/i.test(navigator.platform ?? navigator.userAgent)
@@ -813,6 +826,10 @@ export const CanvasViewport = () => {
     const node = containerRef.current
     if (!node) return
 
+    if (contextMenu) {
+      setContextMenu(null)
+    }
+
     setSnapGuides([])
 
     if (editingTextId) {
@@ -925,6 +942,41 @@ export const CanvasViewport = () => {
     setMarquee(null)
     event.preventDefault()
   }
+
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault()
+      if (!selectionIds.length) return
+      setContextMenu({ x: event.clientX, y: event.clientY })
+    },
+    [selectionIds.length],
+  )
+
+  const handleContextAction = useCallback(
+    (action: 'forward' | 'backward' | 'front' | 'back') => {
+      switch (action) {
+        case 'forward':
+          bringSelectionForward()
+          break
+        case 'backward':
+          sendSelectionBackward()
+          break
+        case 'front':
+          bringSelectionToFront()
+          break
+        case 'back':
+          sendSelectionToBack()
+          break
+      }
+      setContextMenu(null)
+    },
+    [
+      bringSelectionForward,
+      bringSelectionToFront,
+      sendSelectionBackward,
+      sendSelectionToBack,
+    ],
+  )
 
   const handlePointerMove: PointerEventHandler<HTMLDivElement> = (event) => {
     const transform = transformState.current
@@ -1551,6 +1603,15 @@ export const CanvasViewport = () => {
     }
   }, [settings.snapEnabled])
 
+  useEffect(() => {
+    if (!contextMenu) return
+    const handlePointerDown = () => setContextMenu(null)
+    window.addEventListener('pointerdown', handlePointerDown, true)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown, true)
+    }
+  }, [contextMenu])
+
   return (
     <div
       ref={containerRef}
@@ -1560,6 +1621,7 @@ export const CanvasViewport = () => {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onPointerLeave={handlePointerUp}
+      onContextMenu={handleContextMenu}
     >
       {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
 
@@ -1598,6 +1660,44 @@ export const CanvasViewport = () => {
             Canvas viewport placeholder – pan with {panShortcutLabel}, zoom
             with pinch/ctrl+wheel.
           </p>
+        </div>
+      ) : null}
+
+      {contextMenu ? (
+        <div
+          className="pointer-events-auto fixed z-[70] min-w-[180px] rounded-lg border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/95 py-2 shadow-xl backdrop-blur"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm text-(--color-app-foreground) transition hover:bg-(--color-button-hover-bg)"
+            onClick={() => handleContextAction('forward')}
+          >
+            Bring forward
+          </button>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm text-(--color-app-foreground) transition hover:bg-(--color-button-hover-bg)"
+            onClick={() => handleContextAction('backward')}
+          >
+            Send backward
+          </button>
+          <div className="my-1 h-px bg-(--color-elevated-border)/60" />
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm text-(--color-app-foreground) transition hover:bg-(--color-button-hover-bg)"
+            onClick={() => handleContextAction('front')}
+          >
+            Bring to front
+          </button>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm text-(--color-app-foreground) transition hover:bg-(--color-button-hover-bg)"
+            onClick={() => handleContextAction('back')}
+          >
+            Send to back
+          </button>
         </div>
       ) : null}
 

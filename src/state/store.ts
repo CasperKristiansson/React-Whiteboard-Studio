@@ -177,21 +177,25 @@ const reorderSelection = (
   if (!state.selection.length) return false
 
   const selected = new Set(state.selection)
-  const sorted = [...state.document.shapes].sort((a, b) => a.zIndex - b.zIndex)
-  const changed = mutate(sorted, selected)
+  const sorted = state.document.shapes
+    .map((shape, index) => ({ shape, index }))
+    .sort((a, b) => a.shape.zIndex - b.shape.zIndex)
+  const changed = mutate(
+    sorted.map((entry) => entry.shape),
+    selected,
+  )
   if (!changed) return false
 
   captureHistorySnapshot(state)
 
-  sorted.forEach((shape, index) => {
+  sorted.forEach((entry, index) => {
     const nextZ = index + 1
-    if (shape.zIndex !== nextZ) {
-      shape.zIndex = nextZ
-      shape.updatedAt = now()
+    if (entry.shape.zIndex !== nextZ) {
+      entry.shape.zIndex = nextZ
+      entry.shape.updatedAt = now()
     }
+    state.document.shapes[entry.index] = entry.shape
   })
-
-  state.document.shapes = sorted
   state.dirty = true
   return true
 }
