@@ -1,3 +1,5 @@
+import { current, isDraft } from 'immer'
+
 import type { DocumentV1, UUID } from '../types'
 
 export const HISTORY_CAPACITY = 200
@@ -19,11 +21,13 @@ export type HistoryState = {
 const hasStructuredClone = typeof structuredClone === 'function'
 
 export const cloneDocument = (document: DocumentV1): DocumentV1 => {
+  const source = isDraft(document) ? current(document) : document
+
   if (hasStructuredClone) {
-    return structuredClone(document)
+    return structuredClone(source)
   }
 
-  return JSON.parse(JSON.stringify(document)) as DocumentV1
+  return JSON.parse(JSON.stringify(source)) as DocumentV1
 }
 
 export const cloneSelection = (selection: UUID[]): UUID[] => [...selection]

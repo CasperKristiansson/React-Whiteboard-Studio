@@ -311,6 +311,143 @@ export const CanvasViewport = () => {
     /Mac|iP(hone|od|ad)/i.test(navigator.platform ?? navigator.userAgent)
   const panShortcutLabel = isMacPlatform ? '⌘ + drag' : 'Ctrl + drag'
 
+  const toCssColor = useCallback((color: { r: number; g: number; b: number; a: number }) => {
+    const alpha = typeof color.a === 'number' ? color.a : 1
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`
+  }, [])
+
+  const shapeElements = useMemo(() => {
+    const sorted = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
+
+    const elements = sorted.map((shape) => {
+      if (shape.hidden) return null
+
+      switch (shape.type) {
+        case 'rect': {
+          const topLeft = worldPointToScreen(shape.position, viewport)
+          const width = shape.size.x * viewport.scale
+          const height = shape.size.y * viewport.scale
+          if (width === 0 && height === 0) return null
+          const stroke = toCssColor(shape.stroke)
+          const fill = shape.fill ? toCssColor(shape.fill) : 'none'
+          const radius = shape.radius ? shape.radius * viewport.scale : 0
+          return (
+            <rect
+              key={shape.id}
+              x={topLeft.x}
+              y={topLeft.y}
+              width={width}
+              height={height}
+              rx={radius}
+              ry={radius}
+              fill={fill}
+              stroke={stroke}
+              strokeWidth={Math.max(1, shape.strokeWidth * viewport.scale)}
+            />
+          )
+        }
+        case 'ellipse': {
+          const center = worldPointToScreen(shape.position, viewport)
+          const rx = shape.rx * viewport.scale
+          const ry = shape.ry * viewport.scale
+          if (rx === 0 && ry === 0) return null
+          const stroke = toCssColor(shape.stroke)
+          const fill = shape.fill ? toCssColor(shape.fill) : 'none'
+          return (
+            <ellipse
+              key={shape.id}
+              cx={center.x}
+              cy={center.y}
+              rx={rx}
+              ry={ry}
+              fill={fill}
+              stroke={stroke}
+              strokeWidth={Math.max(1, shape.strokeWidth * viewport.scale)}
+            />
+          )
+        }
+        case 'line':
+        case 'arrow': {
+          const points = shape.points.map((point) =>
+            worldPointToScreen(
+              {
+                x: shape.position.x + point.x,
+                y: shape.position.y + point.y,
+              },
+              viewport,
+            ),
+          )
+          if (points.length < 2) return null
+          const stroke = toCssColor(shape.stroke)
+          const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ')
+          return (
+            <polyline
+              key={shape.id}
+              points={polylinePoints}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={Math.max(1, shape.strokeWidth * viewport.scale)}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )
+        }
+        case 'path': {
+          const points = shape.d.map((point) =>
+            worldPointToScreen(
+              {
+                x: shape.position.x + point.x,
+                y: shape.position.y + point.y,
+              },
+              viewport,
+            ),
+          )
+          if (points.length < 2) return null
+          const stroke = toCssColor(shape.stroke)
+          const d = points
+            .map((point, index) =>
+              index === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`,
+            )
+            .join(' ')
+          return (
+            <path
+              key={shape.id}
+              d={d}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={Math.max(1, shape.strokeWidth * viewport.scale)}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )
+        }
+        case 'text': {
+          const position = worldPointToScreen(shape.position, viewport)
+          const stroke = toCssColor(shape.stroke)
+          return (
+            <text
+              key={shape.id}
+              x={position.x}
+              y={position.y}
+              fill={shape.fill ? toCssColor(shape.fill) : stroke}
+              fontFamily={shape.font.family}
+              fontSize={shape.font.size * viewport.scale}
+              fontWeight={shape.font.weight}
+              textAnchor={shape.align === 'center' ? 'middle' : shape.align === 'right' ? 'end' : 'start'}
+              dominantBaseline="hanging"
+            >
+              {shape.text}
+            </text>
+          )
+        }
+        default:
+          return null
+      }
+    })
+
+    return elements.filter(Boolean)
+  }, [shapes, toCssColor, viewport.x, viewport.y, viewport.scale])
+
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
     [shapes, selectionIds],
@@ -1408,6 +1545,14 @@ export const CanvasViewport = () => {
       {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
 
       <GuidesOverlay guides={snapGuides} viewport={viewport} />
+
+      <svg
+        className="pointer-events-none absolute inset-0"
+        width="100%"
+        height="100%"
+      >
+        {shapeElements}
+      </svg>
 
       <SelectionOverlay
         screenBounds={selectionScreenBounds}
