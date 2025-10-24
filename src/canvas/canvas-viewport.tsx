@@ -213,8 +213,10 @@ const computeScaledBounds = (
   let newHeight = newMaxY - newMinY
 
   if (shiftKey && cornerHandles.includes(handle)) {
-    const originalWidth = bounds.maxX - bounds.minX || (newWidth === 0 ? 1 : Math.abs(newWidth))
-    const originalHeight = bounds.maxY - bounds.minY || (newHeight === 0 ? 1 : Math.abs(newHeight))
+    const originalWidth =
+      bounds.maxX - bounds.minX || (newWidth === 0 ? 1 : Math.abs(newWidth))
+    const originalHeight =
+      bounds.maxY - bounds.minY || (newHeight === 0 ? 1 : Math.abs(newHeight))
     const aspect = originalHeight / originalWidth
 
     if (aspect > 0) {
@@ -270,9 +272,7 @@ export const CanvasViewport = () => {
   const bringSelectionToFront = useAppStore(
     (state) => state.bringSelectionToFront,
   )
-  const sendSelectionToBack = useAppStore(
-    (state) => state.sendSelectionToBack,
-  )
+  const sendSelectionToBack = useAppStore((state) => state.sendSelectionToBack)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pointerState = useRef<PointerState>({ ...initialPointerState })
@@ -297,16 +297,22 @@ export const CanvasViewport = () => {
   const [editingTextId, setEditingTextId] = useState<string | null>(null)
   const updateShape = useAppStore((state) => state.updateShape)
   const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([])
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+  } | null>(null)
   const isMacPlatform =
     typeof navigator !== 'undefined' &&
     /Mac|iP(hone|od|ad)/i.test(navigator.platform ?? navigator.userAgent)
   const panShortcutLabel = isMacPlatform ? '⌘ + drag' : 'Ctrl + drag'
 
-  const toCssColor = useCallback((color: { r: number; g: number; b: number; a: number }) => {
-    const alpha = typeof color.a === 'number' ? color.a : 1
-    return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`
-  }, [])
+  const toCssColor = useCallback(
+    (color: { r: number; g: number; b: number; a: number }) => {
+      const alpha = typeof color.a === 'number' ? color.a : 1
+      return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`
+    },
+    [],
+  )
 
   const shapeElements = useMemo(() => {
     const sorted = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
@@ -434,7 +440,9 @@ export const CanvasViewport = () => {
           const stroke = toCssColor(shape.stroke)
           const d = points
             .map((point, index) =>
-              index === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`,
+              index === 0
+                ? `M ${point.x} ${point.y}`
+                : `L ${point.x} ${point.y}`,
             )
             .join(' ')
           return (
@@ -461,7 +469,13 @@ export const CanvasViewport = () => {
               fontFamily={shape.font.family}
               fontSize={shape.font.size * viewport.scale}
               fontWeight={shape.font.weight}
-              textAnchor={shape.align === 'center' ? 'middle' : shape.align === 'right' ? 'end' : 'start'}
+              textAnchor={
+                shape.align === 'center'
+                  ? 'middle'
+                  : shape.align === 'right'
+                    ? 'end'
+                    : 'start'
+              }
               dominantBaseline="hanging"
             >
               {shape.text}
@@ -706,7 +720,9 @@ export const CanvasViewport = () => {
 
   useEffect(() => {
     const panKeyCodes = new Set(
-      isMacPlatform ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
+      isMacPlatform
+        ? ['MetaLeft', 'MetaRight']
+        : ['ControlLeft', 'ControlRight'],
     )
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -914,7 +930,8 @@ export const CanvasViewport = () => {
       panModifierPressed.current ||
       event.metaKey ||
       (!isMacPlatform && event.ctrlKey)
-    const shouldPan = modifierHeld || event.pointerType === 'touch' || activeTool !== 'select'
+    const shouldPan =
+      modifierHeld || event.pointerType === 'touch' || activeTool !== 'select'
 
     if (shouldPan) {
       node.setPointerCapture(event.pointerId)
@@ -954,18 +971,23 @@ export const CanvasViewport = () => {
 
   const handleContextAction = useCallback(
     (action: 'forward' | 'backward' | 'front' | 'back') => {
+      console.log('[contextMenu] action', action, { selectionIds })
       switch (action) {
         case 'forward':
           bringSelectionForward()
+          commit('Bring forward')
           break
         case 'backward':
           sendSelectionBackward()
+          commit('Send backward')
           break
         case 'front':
           bringSelectionToFront()
+          commit('Bring to front')
           break
         case 'back':
           sendSelectionToBack()
+          commit('Send to back')
           break
       }
       setContextMenu(null)
@@ -973,8 +995,10 @@ export const CanvasViewport = () => {
     [
       bringSelectionForward,
       bringSelectionToFront,
+      commit,
       sendSelectionBackward,
       sendSelectionToBack,
+      selectionIds,
     ],
   )
 
@@ -1657,15 +1681,15 @@ export const CanvasViewport = () => {
       {shapeElements.length === 0 ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-(--color-muted-foreground)">
           <p className="text-sm font-medium">
-            Canvas viewport placeholder – pan with {panShortcutLabel}, zoom
-            with pinch/ctrl+wheel.
+            Canvas viewport placeholder – pan with {panShortcutLabel}, zoom with
+            pinch/ctrl+wheel.
           </p>
         </div>
       ) : null}
 
       {contextMenu ? (
         <div
-          className="pointer-events-auto fixed z-[70] min-w-[180px] rounded-lg border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/95 py-2 shadow-xl backdrop-blur"
+          className="pointer-events-auto fixed z-70 min-w-[180px] rounded-lg border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/95 py-2 shadow-xl backdrop-blur"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onPointerDown={(event) => event.stopPropagation()}
         >

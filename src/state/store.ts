@@ -170,34 +170,19 @@ const captureHistorySnapshot = (state: AppState) => {
   }
 }
 
-const reorderSelection = (
-  state: AppState,
-  mutate: (sorted: Shape[], selected: Set<UUID>) => boolean,
-) => {
-  if (!state.selection.length) return false
+const sortByZIndex = (shapes: Shape[]) =>
+  [...shapes].sort((a, b) => a.zIndex - b.zIndex)
 
-  const selected = new Set(state.selection)
-  const sorted = state.document.shapes
-    .map((shape, index) => ({ shape, index }))
-    .sort((a, b) => a.shape.zIndex - b.shape.zIndex)
-  const changed = mutate(
-    sorted.map((entry) => entry.shape),
-    selected,
-  )
-  if (!changed) return false
-
-  captureHistorySnapshot(state)
-
-  sorted.forEach((entry, index) => {
+const applyZOrder = (state: AppState, ordered: Shape[]) => {
+  ordered.forEach((shape, index) => {
     const nextZ = index + 1
-    if (entry.shape.zIndex !== nextZ) {
-      entry.shape.zIndex = nextZ
-      entry.shape.updatedAt = now()
+    if (shape.zIndex !== nextZ) {
+      shape.zIndex = nextZ
+      shape.updatedAt = now()
     }
-    state.document.shapes[entry.index] = entry.shape
   })
+  state.document.shapes = ordered
   state.dirty = true
-  return true
 }
 
 export const useAppStore = create<AppStore>()(
@@ -390,113 +375,99 @@ export const useAppStore = create<AppStore>()(
 
     bringSelectionForward: () => {
       set((state) => {
-        reorderSelection(state, (sorted, selected) => {
-          let changed = false
-          for (let index = sorted.length - 2; index >= 0; index -= 1) {
-            const current = sorted[index]
-            if (!selected.has(current.id)) continue
-            const next = sorted[index + 1]
-            if (!next || selected.has(next.id)) continue
-            sorted[index] = next
-            sorted[index + 1] = current
+        if (!state.selection.length) return
+        const selected = new Set(state.selection)
+        const ordered = sortByZIndex(state.document.shapes)
+        let changed = false
+
+        for (let index = ordered.length - 2; index >= 0; index -= 1) {
+          const current = ordered[index]
+          if (!selected.has(current.id)) continue
+          let target = index + 1
+          while (target < ordered.length && selected.has(ordered[target].id)) {
+            target += 1
+          }
+          if (target < ordered.length) {
+            const [shape] = ordered.splice(index, 1)
+            ordered.splice(target, 0, shape)
             changed = true
           }
-          return changed
-        })
+        }
+
+        if (!changed) return
+        captureHistorySnapshot(state)
+        applyZOrder(state, ordered)
       })
     },
 
     sendSelectionBackward: () => {
       set((state) => {
-        reorderSelection(state, (sorted, selected) => {
-          let changed = false
-          for (let index = 1; index < sorted.length; index += 1) {
-            const current = sorted[index]
-            if (!selected.has(current.id)) continue
-            const previous = sorted[index - 1]
-            if (!previous || selected.has(previous.id)) continue
-            sorted[index] = previous
-            sorted[index - 1] = current
+        if (!state.selection.length) return
+        const selected = new Set(state.selection)
+        const ordered = sortByZIndex(state.document.shapes)
+        let changed = false
+
+        for (let index = 1; index < ordered.length; index += 1) {
+          const current = ordered[index]
+          if (!selected.has(current.id)) continue
+          let target = index - 1
+          while (target >= 0 && selected.has(ordered[target].id)) {
+            target -= 1
+          }
+          if (target >= 0) {
+            const [shape] = ordered.splice(index, 1)
+            ordered.splice(target, 0, shape)
             changed = true
           }
-          return changed
-        })
+        }
+
+        if (!changed) return
+        captureHistorySnapshot(state)
+        applyZOrder(state, ordered)
       })
     },
 
     bringSelectionToFront: () => {
       set((state) => {
-        reorderSelection(state, (sorted, selected) => {
-          const selectedShapes = sorted.filter((shape) =>
-            selected.has(shape.id),
-          )
-          if (
-            !selectedShapes.length ||
-            selectedShapes.length === sorted.length
-          ) {
-            return false
-          }
-          const unselectedShapes = sorted.filter(
-            (shape) => !selected.has(shape.id),
-          )
-          if (!unselectedShapes.length) {
-            return false
-          }
+        if (!state.selection.length) return
+        const selected = new Set(state.selection)
+        const ordered = sortByZIndex(state.document.shapes)
+        const selectedShapes = ordered.filter((shape) => selected.has(shape.id))
+        const unselectedShapes = ordered.filter(
+          (shape) => !selected.has(shape.id),
+        )
+        if (!selectedShapes.length || !unselectedShapes.length) return
 
-          let changed = false
-          for (let index = 0; index < selectedShapes.length; index += 1) {
-            const source = selectedShapes[index]
-            const destination =
-              sorted[sorted.length - selectedShapes.length + index]
-            if (source.id !== destination.id) {
-              changed = true
-              break
-            }
-          }
+        const nextOrder = [...unselectedShapes, ...selectedShapes]
+        const changed = nextOrder.some(
+          (shape, index) => shape.id !== ordered[index].id,
+        )
+        if (!changed) return
 
-          if (!changed) return false
-
-          sorted.length = 0
-          sorted.push(...unselectedShapes, ...selectedShapes)
-          return true
-        })
+        captureHistorySnapshot(state)
+        applyZOrder(state, nextOrder)
       })
     },
 
     sendSelectionToBack: () => {
       set((state) => {
-        reorderSelection(state, (sorted, selected) => {
-          const selectedShapes = sorted.filter((shape) =>
-            selected.has(shape.id),
-          )
-          if (
-            !selectedShapes.length ||
-            selectedShapes.length === sorted.length
-          ) {
-            return false
-          }
-          const unselectedShapes = sorted.filter(
-            (shape) => !selected.has(shape.id),
-          )
-          if (!unselectedShapes.length) {
-            return false
-          }
+        if (!state.selection.length) return
+        const selected = new Set(state.selection)
+        const ordered = sortByZIndex(state.document.shapes)
+        const selectedShapes = ordered.filter((shape) => selected.has(shape.id))
+        const unselectedShapes = ordered.filter(
+          (shape) => !selected.has(shape.id),
+        )
+        if (!selectedShapes.length || !unselectedShapes.length) return
 
-          let changed = false
-          for (let index = 0; index < selectedShapes.length; index += 1) {
-            const destination = sorted[index]
-            if (destination.id !== selectedShapes[index].id) {
-              changed = true
-              break
-            }
-          }
+        const nextOrder = [...selectedShapes, ...unselectedShapes]
+        const changed = nextOrder.some(
+          (shape, index) => shape.id !== ordered[index].id,
+        )
+        if (!changed) return
 
-          if (!changed) return false
-
-          sorted.length = 0
-          sorted.push(...selectedShapes, ...unselectedShapes)
-          return true
-        })
+        captureHistorySnapshot(state)
+        applyZOrder(state, nextOrder)
       })
     },
 

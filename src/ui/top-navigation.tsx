@@ -248,7 +248,7 @@ const ProjectsMenu = ({ isOpen }: ProjectsMenuProps) => {
         className="grid gap-2 rounded-xl border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/85 px-3 py-3 shadow-sm"
       >
         <label className="flex flex-col gap-1 text-left text-(--color-app-foreground)">
-          <span className="text-xs font-semibold uppercase tracking-wide text-(--color-muted-foreground)">
+          <span className="text-xs font-semibold tracking-wide text-(--color-muted-foreground) uppercase">
             New project
           </span>
           <input

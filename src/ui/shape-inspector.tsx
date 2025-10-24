@@ -229,10 +229,10 @@ const ShapeInspector = () => {
   const shapeLabel = SHAPE_LABEL[selectedShape.type] ?? 'Shape'
 
   return (
-    <div className="pointer-events-none fixed right-4 top-1/2 z-[60] -translate-y-1/2">
+    <div className="pointer-events-none fixed top-1/2 right-4 z-[60] -translate-y-1/2">
       <div className="pointer-events-auto w-72 rounded-2xl border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/95 p-4 shadow-2xl backdrop-blur">
         <header className="mb-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-(--color-muted-foreground)">
+          <p className="text-[11px] font-semibold tracking-wide text-(--color-muted-foreground) uppercase">
             Inspector
           </p>
           <h2 className="text-base font-semibold text-(--color-app-foreground)">
