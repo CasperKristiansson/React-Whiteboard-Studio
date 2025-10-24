@@ -301,6 +301,7 @@ export const CanvasViewport = () => {
     x: number
     y: number
   } | null>(null)
+  const contextMenuRef = useRef<HTMLDivElement | null>(null)
   const isMacPlatform =
     typeof navigator !== 'undefined' &&
     /Mac|iP(hone|od|ad)/i.test(navigator.platform ?? navigator.userAgent)
@@ -971,7 +972,6 @@ export const CanvasViewport = () => {
 
   const handleContextAction = useCallback(
     (action: 'forward' | 'backward' | 'front' | 'back') => {
-      console.log('[contextMenu] action', action, { selectionIds })
       switch (action) {
         case 'forward':
           bringSelectionForward()
@@ -998,7 +998,6 @@ export const CanvasViewport = () => {
       commit,
       sendSelectionBackward,
       sendSelectionToBack,
-      selectionIds,
     ],
   )
 
@@ -1629,10 +1628,16 @@ export const CanvasViewport = () => {
 
   useEffect(() => {
     if (!contextMenu) return
-    const handlePointerDown = () => setContextMenu(null)
-    window.addEventListener('pointerdown', handlePointerDown, true)
+    const handlePointerDown = (event: PointerEvent) => {
+      const menuNode = contextMenuRef.current
+      if (menuNode && menuNode.contains(event.target as Node)) {
+        return
+      }
+      setContextMenu(null)
+    }
+    window.addEventListener('pointerdown', handlePointerDown)
     return () => {
-      window.removeEventListener('pointerdown', handlePointerDown, true)
+      window.removeEventListener('pointerdown', handlePointerDown)
     }
   }, [contextMenu])
 
@@ -1689,9 +1694,13 @@ export const CanvasViewport = () => {
 
       {contextMenu ? (
         <div
+          ref={contextMenuRef}
           className="pointer-events-auto fixed z-70 min-w-[180px] rounded-lg border border-(--color-elevated-border)/70 bg-(--color-elevated-bg)/95 py-2 shadow-xl backdrop-blur"
+          onPointerDown={(event) => {
+            // Prevent the canvas pointer logic from hijacking menu clicks
+            event.stopPropagation()
+          }}
           style={{ left: contextMenu.x, top: contextMenu.y }}
-          onPointerDown={(event) => event.stopPropagation()}
         >
           <button
             type="button"

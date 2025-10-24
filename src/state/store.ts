@@ -62,6 +62,8 @@ export type AppState = {
   dirty: boolean
   /** Undo/redo history state */
   history: HistoryState
+  /** Last z-order action performed */
+  lastZOrderAction: 'forward' | 'backward' | 'front' | 'back' | null
 }
 
 export type AppActions = {
@@ -143,6 +145,7 @@ const initialState: AppState = {
   theme: 'system',
   dirty: false,
   history: createHistoryState(),
+  lastZOrderAction: null,
 }
 
 const trimStack = (stack: HistoryEntry[], capacity: number) => {
@@ -173,7 +176,11 @@ const captureHistorySnapshot = (state: AppState) => {
 const sortByZIndex = (shapes: Shape[]) =>
   [...shapes].sort((a, b) => a.zIndex - b.zIndex)
 
-const applyZOrder = (state: AppState, ordered: Shape[]) => {
+const applyZOrder = (
+  state: AppState,
+  ordered: Shape[],
+  action: 'forward' | 'backward' | 'front' | 'back',
+) => {
   ordered.forEach((shape, index) => {
     const nextZ = index + 1
     if (shape.zIndex !== nextZ) {
@@ -182,6 +189,7 @@ const applyZOrder = (state: AppState, ordered: Shape[]) => {
     }
   })
   state.document.shapes = ordered
+  state.lastZOrderAction = action
   state.dirty = true
 }
 
@@ -396,7 +404,8 @@ export const useAppStore = create<AppStore>()(
 
         if (!changed) return
         captureHistorySnapshot(state)
-        applyZOrder(state, ordered)
+        applyZOrder(state, ordered, 'forward')
+        state.lastZOrderAction = 'forward'
       })
     },
 
@@ -423,7 +432,8 @@ export const useAppStore = create<AppStore>()(
 
         if (!changed) return
         captureHistorySnapshot(state)
-        applyZOrder(state, ordered)
+        applyZOrder(state, ordered, 'backward')
+        state.lastZOrderAction = 'backward'
       })
     },
 
@@ -445,7 +455,8 @@ export const useAppStore = create<AppStore>()(
         if (!changed) return
 
         captureHistorySnapshot(state)
-        applyZOrder(state, nextOrder)
+        applyZOrder(state, nextOrder, 'front')
+        state.lastZOrderAction = 'front'
       })
     },
 
@@ -467,7 +478,8 @@ export const useAppStore = create<AppStore>()(
         if (!changed) return
 
         captureHistorySnapshot(state)
-        applyZOrder(state, nextOrder)
+        applyZOrder(state, nextOrder, 'back')
+        state.lastZOrderAction = 'back'
       })
     },
 
@@ -602,6 +614,8 @@ export const selectCanUndo = (state: AppStore) =>
   state.history.pending !== null || state.history.past.length > 0
 export const selectCanRedo = (state: AppStore) =>
   state.history.future.length > 0
+export const selectLastZOrderAction = (state: AppStore) =>
+  state.lastZOrderAction
 
 export const useAppSelector = <T>(selector: (state: AppStore) => T) =>
   useAppStore(selector)

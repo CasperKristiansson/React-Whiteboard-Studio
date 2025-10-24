@@ -469,7 +469,7 @@ const TopNavigation = () => {
           label="Tools"
           isOpen={openMenu === 'tools'}
           onToggle={toggleMenu}
-          contentClassName="p-3 min-w-[260px] sm:min-w-[360px] lg:min-w-[420px]"
+          contentClassName="p-3 min-w-[260px] sm:min-w-[360px] lg:min-w-[450px]"
         >
           <div className="max-w-full">
             <Toolbar

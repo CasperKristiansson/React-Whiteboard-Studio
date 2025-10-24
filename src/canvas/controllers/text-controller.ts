@@ -80,7 +80,10 @@ export const finalizeText = (id: string, label = 'Insert text') => {
     return
   }
 
-  updateTextShapeBounds(shape)
+  store.updateShape(id, (target) => {
+    if (target.type !== 'text') return
+    updateTextShapeBounds(target)
+  })
   store.select([id], 'set')
   store.commit(label)
   store.setTool('select')

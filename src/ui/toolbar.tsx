@@ -35,7 +35,12 @@ const TOOL_OPTIONS: {
   icon: IconType
 }[] = [
   { value: 'select', label: 'Select', shortcut: 'V', icon: LuPointer },
-  { value: 'rect', label: 'Rectangle', shortcut: 'R', icon: LuSquare },
+  {
+    value: 'rect',
+    label: 'Rectangle',
+    shortcut: 'R',
+    icon: LuSquare,
+  },
   { value: 'ellipse', label: 'Ellipse', shortcut: 'O', icon: LuCircle },
   { value: 'line', label: 'Line', shortcut: 'L', icon: LuPenLine },
   { value: 'arrow', label: 'Arrow', shortcut: 'A', icon: LuArrowUpRight },
