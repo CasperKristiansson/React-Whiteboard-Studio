@@ -112,6 +112,12 @@ export const updatePolyline = (
   point: Vec2,
   options?: { force?: boolean },
 ) => {
+  if (state.tool === 'arrow') {
+    state.points[1] = point
+    applyPolylineShape(state, state.points)
+    return
+  }
+
   const last = state.points[state.points.length - 1]
   if (!options?.force && !shouldSample(last, point)) return
 
@@ -120,6 +126,7 @@ export const updatePolyline = (
 }
 
 export const commitPolylinePoint = (state: PolylineState, point: Vec2) => {
+  if (state.tool === 'arrow') return
   state.points[state.points.length - 1] = point
   applyPolylineShape(state, state.points)
   state.points.push({ ...point })
@@ -131,21 +138,26 @@ export const finalizePolyline = (state: PolylineState) => {
   const store = useAppStore.getState()
 
   const points =
-    state.points.length > 1 ? state.points.slice(0, -1) : [...state.points]
+    state.tool === 'arrow'
+      ? state.points.slice(0, 2)
+      : state.points.length > 1
+        ? state.points.slice(0, -1)
+        : [...state.points]
 
   const relativePoints = points.map((p) => ({
     x: p.x - state.position.x,
     y: p.y - state.position.y,
   }))
 
-  if (
-    relativePoints.length <= 1 ||
-    (relativePoints.length === 2 &&
-      Math.hypot(
-        relativePoints[1].x - relativePoints[0].x,
-        relativePoints[1].y - relativePoints[0].y,
-      ) < 2)
-  ) {
+  const segmentLength =
+    relativePoints.length >= 2
+      ? Math.hypot(
+          relativePoints[relativePoints.length - 1].x - relativePoints[0].x,
+          relativePoints[relativePoints.length - 1].y - relativePoints[0].y,
+        )
+      : 0
+
+  if (relativePoints.length <= 1 || segmentLength < 2) {
     cancelPolyline(state)
     return
   }

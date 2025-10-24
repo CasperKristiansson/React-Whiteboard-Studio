@@ -24,7 +24,7 @@ import {
   useAppSelector,
   useAppStore,
 } from '../state/store'
-import type { Shape, TextShape, Vec2 } from '../types'
+import type { ArrowShape, Shape, TextShape, Vec2 } from '../types'
 import GridLayer from './layers/grid-layer'
 import SelectionOverlay, {
   type ScreenRect,
@@ -380,13 +380,49 @@ export const CanvasViewport = () => {
           if (points.length < 2) return null
           const stroke = toCssColor(shape.stroke)
           const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ')
+          const strokeWidth = Math.max(1, shape.strokeWidth * viewport.scale)
+
+          if (shape.type === 'arrow') {
+            const headSize = (shape as ArrowShape).headSize * viewport.scale
+            const markerId = `arrow-head-${shape.id}`
+            return (
+              <g key={shape.id}>
+                <defs>
+                  <marker
+                    id={markerId}
+                    markerWidth={headSize}
+                    markerHeight={headSize}
+                    refX={headSize * 0.6}
+                    refY={headSize * 0.3}
+                    orient="auto"
+                    markerUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d={`M 0 0 L ${headSize} ${headSize * 0.3} L 0 ${headSize * 0.6} z`}
+                      fill={stroke}
+                    />
+                  </marker>
+                </defs>
+                <polyline
+                  points={polylinePoints}
+                  fill="none"
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  markerEnd={`url(#${markerId})`}
+                />
+              </g>
+            )
+          }
+
           return (
             <polyline
               key={shape.id}
               points={polylinePoints}
               fill="none"
               stroke={stroke}
-              strokeWidth={Math.max(1, shape.strokeWidth * viewport.scale)}
+              strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
