@@ -9,9 +9,9 @@ Use this suite to manually verify every major feature after automated work compl
 - [x] Enable `?debug` query flag; confirm debug overlay displays fps, counts, and live data.
 
 ## Drawing Tools & Interactions
-- [ ] Select tool: click single shapes, marquee select multiple, shift-add/remove, delete via keyboard.
-- [ ] Rectangle tool: draw, resize, ensure border/fill controls apply and update text bounds in context panel.
-- [ ] Ellipse tool: draw ellipses, verify rx/ry adjustments and styling updates.
+- [x] Select tool: click single shapes, marquee select multiple, shift-add/remove, delete via keyboard.
+- [x] Rectangle tool: draw, resize, ensure border/fill controls apply and update text bounds in context panel.
+- [x] Ellipse tool: draw ellipses, verify rx/ry adjustments and styling updates.
 - [ ] Line tool: multi-click creates segments, double-click/Enter finalises; ensure arrow tool renders head sizes correctly.
 - [ ] Path tool: freehand draw; confirm smoothing and finalisation.
 - [ ] Text tool: insert, inline edit, sanitize pasted HTML, typography controls (font, weight, size, spacing, line-height), toggle italic/underline, change alignment.

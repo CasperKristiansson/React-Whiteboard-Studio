@@ -100,7 +100,13 @@ const getSharedValue = <T,>(
 
 type ToolbarVariant = 'default' | 'dropdown'
 
-const Toolbar = ({ variant = 'default' }: { variant?: ToolbarVariant }) => {
+const Toolbar = ({
+  variant = 'default',
+  onToolSelect,
+}: {
+  variant?: ToolbarVariant
+  onToolSelect?: (tool: Tool) => void
+}) => {
   const activeTool = useAppSelector(selectActiveTool)
   const selectionIds = useAppSelector(selectSelection)
   const shapes = useAppSelector(selectShapes)
@@ -281,7 +287,10 @@ const Toolbar = ({ variant = 'default' }: { variant?: ToolbarVariant }) => {
             shortcut={tool.shortcut}
             icon={tool.icon}
             active={tool.value === activeTool}
-            onSelect={setTool}
+            onSelect={(nextTool) => {
+              setTool(nextTool)
+              onToolSelect?.(nextTool)
+            }}
             fullWidth={variant === 'dropdown'}
           />
         ))}

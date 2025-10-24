@@ -472,7 +472,10 @@ const TopNavigation = () => {
           contentClassName="p-3 min-w-[260px] sm:min-w-[360px] lg:min-w-[420px]"
         >
           <div className="max-w-full">
-            <Toolbar variant="dropdown" />
+            <Toolbar
+              variant="dropdown"
+              onToolSelect={() => setOpenMenu(null)}
+            />
           </div>
         </NavDropdown>
 
@@ -529,9 +532,10 @@ const TopNavigation = () => {
                     ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
                     : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
                 )}
-                onClick={() =>
+                onClick={() => {
                   setSettings({ gridVisible: !settings.gridVisible })
-                }
+                  setOpenMenu(null)
+                }}
                 aria-pressed={settings.gridVisible}
               >
                 <span className="flex items-center gap-2">
@@ -551,9 +555,10 @@ const TopNavigation = () => {
                     ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
                     : 'border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
                 )}
-                onClick={() =>
+                onClick={() => {
                   setSettings({ snapEnabled: !settings.snapEnabled })
-                }
+                  setOpenMenu(null)
+                }}
                 aria-pressed={settings.snapEnabled}
               >
                 <span className="flex items-center gap-2">
@@ -568,7 +573,10 @@ const TopNavigation = () => {
               <button
                 type="button"
                 className="flex items-center justify-between gap-3 rounded-xl border border-(--color-elevated-border) bg-(--color-button-bg) px-3 py-2 text-sm font-medium text-(--color-button-muted-text) transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-                onClick={() => setViewport({ x: 0, y: 0, scale: 1 })}
+                onClick={() => {
+                  setViewport({ x: 0, y: 0, scale: 1 })
+                  setOpenMenu(null)
+                }}
               >
                 <span className="flex items-center gap-2">
                   <LuRefreshCcw className="h-4 w-4" />

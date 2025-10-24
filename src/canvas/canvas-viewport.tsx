@@ -1573,12 +1573,14 @@ export const CanvasViewport = () => {
         />
       ) : null}
 
-      <div className="pointer-events-none absolute inset-0 grid place-items-center text-(--color-muted-foreground)">
-        <p className="text-sm font-medium">
-          Canvas viewport placeholder – pan with {panShortcutLabel}, zoom with
-          pinch/ctrl+wheel.
-        </p>
-      </div>
+      {shapeElements.length === 0 ? (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-(--color-muted-foreground)">
+          <p className="text-sm font-medium">
+            Canvas viewport placeholder – pan with {panShortcutLabel}, zoom
+            with pinch/ctrl+wheel.
+          </p>
+        </div>
+      ) : null}
 
       <div className="absolute bottom-4 left-4 rounded border border-(--color-elevated-border) bg-(--color-elevated-bg) px-3 py-2 font-mono text-xs text-(--color-elevated-foreground) shadow-lg backdrop-blur">
         <div>
