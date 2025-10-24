@@ -116,10 +116,10 @@ export const boundsContainBounds = (
   outer: ShapeBounds,
   inner: ShapeBounds,
 ): boolean =>
-  inner.minX >= outer.minX &&
-  inner.maxX <= outer.maxX &&
-  inner.minY >= outer.minY &&
-  inner.maxY <= outer.maxY
+  outer.minX <= inner.maxX &&
+  outer.maxX >= inner.minX &&
+  outer.minY <= inner.maxY &&
+  outer.maxY >= inner.minY
 
 export const createBoundsFromPoints = (start: Vec2, end: Vec2): ShapeBounds =>
   createBounds(

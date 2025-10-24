@@ -272,18 +272,6 @@ export const applyScale = (
           x: point.x - line.position.x,
           y: point.y - line.position.y,
         }))
-        if (line.type === 'arrow') {
-          const widthScale = Math.abs(
-            (newBounds.maxX - newBounds.minX) /
-              (selectionBounds.maxX - selectionBounds.minX || 1),
-          )
-          const heightScale = Math.abs(
-            (newBounds.maxY - newBounds.minY) /
-              (selectionBounds.maxY - selectionBounds.minY || 1),
-          )
-          const uniform = Math.sqrt(widthScale * heightScale)
-          line.headSize = Math.max(4, line.headSize * uniform)
-        }
         break
       }
       case 'path': {
