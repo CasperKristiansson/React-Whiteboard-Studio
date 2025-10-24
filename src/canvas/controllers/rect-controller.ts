@@ -1,4 +1,5 @@
 import type { Vec2 } from '../../types'
+import { DEFAULT_FILL, DEFAULT_STROKE } from '../../types/shapes'
 import { createShapeId, useAppStore } from '../../state/store'
 
 export type RectDragState = {
@@ -23,9 +24,9 @@ export const beginRect = (point: Vec2, pointerId: number): RectDragState => {
     size: { x: 0, y: 0 },
     rotation: 0,
     zIndex: timestamp,
-    stroke: { r: 15, g: 23, b: 42, a: 1 },
-    strokeWidth: 2,
-    fill: { r: 255, g: 255, b: 255, a: 1 },
+    stroke: DEFAULT_STROKE,
+    strokeWidth: 1.5,
+    fill: DEFAULT_FILL,
     createdAt: timestamp,
     updatedAt: timestamp,
   })

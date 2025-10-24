@@ -12,7 +12,7 @@ export type PolylineState = {
   locked: boolean
 }
 
-const DEFAULT_STROKE = { r: 15, g: 23, b: 42, a: 1 }
+const DEFAULT_STROKE = { r: 148, g: 163, b: 184, a: 1 }
 
 export const beginPolyline = (
   tool: Extract<Tool, 'line' | 'arrow'>,
@@ -36,7 +36,7 @@ export const beginPolyline = (
           rotation: 0,
           zIndex: timestamp,
           stroke: DEFAULT_STROKE,
-          strokeWidth: 2,
+          strokeWidth: 1.5,
           headSize: 16,
           createdAt: timestamp,
           updatedAt: timestamp,
@@ -52,7 +52,7 @@ export const beginPolyline = (
           rotation: 0,
           zIndex: timestamp,
           stroke: DEFAULT_STROKE,
-          strokeWidth: 2,
+          strokeWidth: 1.5,
           createdAt: timestamp,
           updatedAt: timestamp,
         }
@@ -87,7 +87,7 @@ const applyPolylineShape = (state: PolylineState, points: Vec2[]) => {
     rotation: 0,
     zIndex: state.zIndex,
     stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     createdAt: state.createdAt,
     updatedAt: Date.now(),
   } as LineShape | ArrowShape
@@ -172,7 +172,7 @@ export const finalizePolyline = (state: PolylineState) => {
           rotation: 0,
           zIndex: state.zIndex,
           stroke: DEFAULT_STROKE,
-          strokeWidth: 2,
+          strokeWidth: 1.5,
           headSize: 16,
           createdAt: state.createdAt,
           updatedAt: Date.now(),
@@ -185,7 +185,7 @@ export const finalizePolyline = (state: PolylineState) => {
           rotation: 0,
           zIndex: state.zIndex,
           stroke: DEFAULT_STROKE,
-          strokeWidth: 2,
+          strokeWidth: 1.5,
           createdAt: state.createdAt,
           updatedAt: Date.now(),
         }

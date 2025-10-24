@@ -95,6 +95,6 @@ export type Shape =
   | TextShape
   | ImageShape
 
-export const DEFAULT_STROKE: RGBA = { r: 33, g: 33, b: 33, a: 1 }
+export const DEFAULT_STROKE: RGBA = { r: 207, g: 213, b: 225, a: 1 }
 
-export const DEFAULT_FILL: RGBA = { r: 255, g: 255, b: 255, a: 1 }
+export const DEFAULT_FILL: RGBA = { r: 241, g: 245, b: 249, a: 1 }

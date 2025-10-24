@@ -1,4 +1,5 @@
 import type { Vec2 } from '../../types'
+import { DEFAULT_STROKE } from '../../types/shapes'
 import { createShapeId, useAppStore } from '../../state/store'
 import { ramerDouglasPeucker } from '../../utils/rdp'
 
@@ -13,7 +14,6 @@ export type PathState = {
   smoothingEpsilon: number
 }
 
-const DEFAULT_STROKE = { r: 15, g: 23, b: 42, a: 1 }
 const SAMPLE_DISTANCE = 1.5
 const DEFAULT_SMOOTHING_EPSILON = 1.2
 
@@ -32,7 +32,7 @@ export const beginPath = (point: Vec2, pointerId: number): PathState => {
     rotation: 0,
     zIndex: timestamp,
     stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     createdAt: timestamp,
     updatedAt: timestamp,
   })
@@ -93,7 +93,7 @@ export const updatePath = (
     rotation: 0,
     zIndex: state.zIndex,
     stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     createdAt: state.createdAt,
     updatedAt: Date.now(),
   })
@@ -128,7 +128,7 @@ export const finalizePath = (state: PathState) => {
     rotation: 0,
     zIndex: state.zIndex,
     stroke: DEFAULT_STROKE,
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     createdAt: state.createdAt,
     updatedAt: Date.now(),
   })
