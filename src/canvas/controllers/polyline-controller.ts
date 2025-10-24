@@ -193,11 +193,15 @@ export const finalizePolyline = (state: PolylineState) => {
   store.addShape(shape)
   store.commit(state.tool === 'arrow' ? 'Draw arrow' : 'Draw line')
   store.select([state.id], 'set')
+  store.setTool('select')
   state.locked = true
 }
 
 export const cancelPolyline = (state: PolylineState) => {
   if (state.locked) return
-  useAppStore.getState().deleteShapes([state.id])
+  const store = useAppStore.getState()
+  store.deleteShapes([state.id])
+  store.clearSelection()
+  store.setTool('select')
   state.locked = true
 }

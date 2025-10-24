@@ -64,6 +64,7 @@ export const cancelText = (id: string, label = 'Cancel text') => {
   store.deleteShapes([id])
   store.clearSelection()
   store.commit(label)
+  store.setTool('select')
 }
 
 export const finalizeText = (id: string, label = 'Insert text') => {
@@ -82,4 +83,5 @@ export const finalizeText = (id: string, label = 'Insert text') => {
   updateTextShapeBounds(shape)
   store.select([id], 'set')
   store.commit(label)
+  store.setTool('select')
 }

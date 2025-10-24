@@ -135,11 +135,15 @@ export const finalizePath = (state: PathState) => {
 
   store.commit('Draw path')
   store.select([state.id], 'set')
+  store.setTool('select')
   state.committed = true
 }
 
 export const cancelPath = (state: PathState) => {
   if (state.committed) return
-  useAppStore.getState().deleteShapes([state.id])
+  const store = useAppStore.getState()
+  store.deleteShapes([state.id])
+  store.clearSelection()
+  store.setTool('select')
   state.committed = true
 }

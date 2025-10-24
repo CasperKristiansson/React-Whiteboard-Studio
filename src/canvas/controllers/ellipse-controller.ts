@@ -76,6 +76,7 @@ export const finalizeEllipse = (state: EllipseDragState) => {
   })
   store.commit('Draw ellipse')
   store.select([state.id], 'set')
+  store.setTool('select')
   state.committed = true
 }
 
@@ -84,5 +85,6 @@ export const cancelEllipse = (state: EllipseDragState) => {
   const store = useAppStore.getState()
   store.deleteShapes([state.id])
   store.clearSelection()
+  store.setTool('select')
   state.committed = true
 }

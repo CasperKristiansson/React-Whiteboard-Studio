@@ -73,6 +73,7 @@ export const finalizeRect = (state: RectDragState) => {
   })
   store.commit('Draw rectangle')
   store.select([state.id], 'set')
+  store.setTool('select')
   state.committed = true
 }
 
@@ -81,5 +82,6 @@ export const cancelRect = (state: RectDragState) => {
   const store = useAppStore.getState()
   store.deleteShapes([state.id])
   store.clearSelection()
+  store.setTool('select')
   state.committed = true
 }

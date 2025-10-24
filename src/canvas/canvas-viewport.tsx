@@ -383,7 +383,7 @@ export const CanvasViewport = () => {
           const strokeWidth = Math.max(1, shape.strokeWidth * viewport.scale)
 
           if (shape.type === 'arrow') {
-            const headSize = (shape as ArrowShape).headSize * viewport.scale
+            const headSize = (shape as ArrowShape).headSize * viewport.scale * 3
             const markerId = `arrow-head-${shape.id}`
             return (
               <g key={shape.id}>
@@ -1355,6 +1355,10 @@ export const CanvasViewport = () => {
         )
         commitPolylinePoint(state, worldPoint)
         state.pointerId = null
+      }
+      if (state.tool === 'arrow') {
+        finalizePolyline(state)
+        polylineState.current = null
       }
       setSnapGuides([])
       event.preventDefault()
