@@ -90,7 +90,6 @@ import { updateTextShapeBounds } from '../utils/text-measure'
 import { mark } from '../dev/perf'
 
 const PAN_COMMIT_DELAY = 120
-const MIN_SCALE_SIZE = 4
 const ROTATE_SNAP_STEP_RADIANS = Math.PI / 12
 const SNAP_GRID_SIZE = 5
 const SNAP_PIXEL_TOLERANCE = 8
@@ -181,32 +180,32 @@ const computeScaledBounds = (
 
   switch (handle) {
     case 'top-left':
-      newMinX = Math.min(pointer.x, maxX - MIN_SCALE_SIZE)
-      newMinY = Math.min(pointer.y, maxY - MIN_SCALE_SIZE)
+      newMinX = Math.min(pointer.x, maxX)
+      newMinY = Math.min(pointer.y, maxY)
       break
     case 'top-right':
-      newMaxX = Math.max(pointer.x, minX + MIN_SCALE_SIZE)
-      newMinY = Math.min(pointer.y, maxY - MIN_SCALE_SIZE)
+      newMaxX = Math.max(pointer.x, minX)
+      newMinY = Math.min(pointer.y, maxY)
       break
     case 'bottom-left':
-      newMinX = Math.min(pointer.x, maxX - MIN_SCALE_SIZE)
-      newMaxY = Math.max(pointer.y, minY + MIN_SCALE_SIZE)
+      newMinX = Math.min(pointer.x, maxX)
+      newMaxY = Math.max(pointer.y, minY)
       break
     case 'bottom-right':
-      newMaxX = Math.max(pointer.x, minX + MIN_SCALE_SIZE)
-      newMaxY = Math.max(pointer.y, minY + MIN_SCALE_SIZE)
+      newMaxX = Math.max(pointer.x, minX)
+      newMaxY = Math.max(pointer.y, minY)
       break
     case 'top':
-      newMinY = Math.min(pointer.y, maxY - MIN_SCALE_SIZE)
+      newMinY = Math.min(pointer.y, maxY)
       break
     case 'bottom':
-      newMaxY = Math.max(pointer.y, minY + MIN_SCALE_SIZE)
+      newMaxY = Math.max(pointer.y, minY)
       break
     case 'left':
-      newMinX = Math.min(pointer.x, maxX - MIN_SCALE_SIZE)
+      newMinX = Math.min(pointer.x, maxX)
       break
     case 'right':
-      newMaxX = Math.max(pointer.x, minX + MIN_SCALE_SIZE)
+      newMaxX = Math.max(pointer.x, minX)
       break
   }
 
@@ -214,8 +213,8 @@ const computeScaledBounds = (
   let newHeight = newMaxY - newMinY
 
   if (shiftKey && cornerHandles.includes(handle)) {
-    const originalWidth = Math.max(bounds.maxX - bounds.minX, MIN_SCALE_SIZE)
-    const originalHeight = Math.max(bounds.maxY - bounds.minY, MIN_SCALE_SIZE)
+    const originalWidth = bounds.maxX - bounds.minX || (newWidth === 0 ? 1 : Math.abs(newWidth))
+    const originalHeight = bounds.maxY - bounds.minY || (newHeight === 0 ? 1 : Math.abs(newHeight))
     const aspect = originalHeight / originalWidth
 
     if (aspect > 0) {
@@ -234,26 +233,6 @@ const computeScaledBounds = (
           newMaxX = newMinX + newWidth
         }
       }
-    }
-  }
-
-  if (newMaxX - newMinX < MIN_SCALE_SIZE) {
-    if (
-      handle === 'left' ||
-      handle === 'top-left' ||
-      handle === 'bottom-left'
-    ) {
-      newMinX = newMaxX - MIN_SCALE_SIZE
-    } else {
-      newMaxX = newMinX + MIN_SCALE_SIZE
-    }
-  }
-
-  if (newMaxY - newMinY < MIN_SCALE_SIZE) {
-    if (handle === 'top' || handle === 'top-left' || handle === 'top-right') {
-      newMinY = newMaxY - MIN_SCALE_SIZE
-    } else {
-      newMaxY = newMinY + MIN_SCALE_SIZE
     }
   }
 

@@ -81,6 +81,8 @@ const ShapeInspector = () => {
   const [strokeWidthInput, setStrokeWidthInput] = useState('')
   const [cornerRadiusInput, setCornerRadiusInput] = useState('')
   const [arrowHeadInput, setArrowHeadInput] = useState('')
+  const [widthInput, setWidthInput] = useState('')
+  const [heightInput, setHeightInput] = useState('')
 
   const selectedShape = useMemo(() => {
     if (selection.length !== 1) return null
@@ -92,6 +94,8 @@ const ShapeInspector = () => {
       setStrokeWidthInput('')
       setCornerRadiusInput('')
       setArrowHeadInput('')
+      setWidthInput('')
+      setHeightInput('')
       return
     }
 
@@ -111,6 +115,24 @@ const ShapeInspector = () => {
       setArrowHeadInput(String((selectedShape as ArrowShape).headSize))
     } else {
       setArrowHeadInput('')
+    }
+
+    if (
+      selectedShape.type === 'rect' ||
+      selectedShape.type === 'image' ||
+      selectedShape.type === 'text'
+    ) {
+      const shape = selectedShape as RectShape | ImageShape | TextShape
+      const size = shape.type === 'text' ? shape.box : shape.size
+      setWidthInput(String(Math.round(size.x)))
+      setHeightInput(String(Math.round(size.y)))
+    } else if (selectedShape.type === 'ellipse') {
+      const shape = selectedShape as EllipseShape
+      setWidthInput(String(Math.round(shape.rx * 2)))
+      setHeightInput(String(Math.round(shape.ry * 2)))
+    } else {
+      setWidthInput('')
+      setHeightInput('')
     }
   }, [selectedShape])
 
@@ -199,6 +221,11 @@ const ShapeInspector = () => {
   const strokeHex = rgbaToHex(selectedShape.stroke)
 
   const showCornerRadius = supportsCornerRadius(selectedShape)
+  const showSizeControls =
+    selectedShape.type === 'rect' ||
+    selectedShape.type === 'ellipse' ||
+    selectedShape.type === 'image' ||
+    selectedShape.type === 'text'
   const shapeLabel = SHAPE_LABEL[selectedShape.type] ?? 'Shape'
 
   return (
@@ -291,6 +318,67 @@ const ShapeInspector = () => {
                 className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-sm"
               />
             </label>
+          ) : null}
+
+          {showSizeControls ? (
+            <div className="grid grid-cols-2 gap-2">
+              <label className="grid gap-1">
+                <span className="text-xs font-medium text-(--color-muted-foreground)">
+                  Width
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={widthInput}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setWidthInput(value)
+                    if (!selectedShape || value.trim() === '') return
+                    const parsed = Number.parseFloat(value)
+                    if (Number.isNaN(parsed)) return
+                    updateShape(selectedShape.id, (shape) => {
+                      if (shape.type === 'rect' || shape.type === 'image') {
+                        shape.size.x = Math.max(1, parsed)
+                      } else if (shape.type === 'text') {
+                        shape.box.x = Math.max(1, parsed)
+                      } else if (shape.type === 'ellipse') {
+                        shape.rx = Math.max(1, parsed / 2)
+                      }
+                    })
+                  }}
+                  className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-sm"
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="text-xs font-medium text-(--color-muted-foreground)">
+                  Height
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={heightInput}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setHeightInput(value)
+                    if (!selectedShape || value.trim() === '') return
+                    const parsed = Number.parseFloat(value)
+                    if (Number.isNaN(parsed)) return
+                    updateShape(selectedShape.id, (shape) => {
+                      if (shape.type === 'rect' || shape.type === 'image') {
+                        shape.size.y = Math.max(1, parsed)
+                      } else if (shape.type === 'text') {
+                        shape.box.y = Math.max(1, parsed)
+                      } else if (shape.type === 'ellipse') {
+                        shape.ry = Math.max(1, parsed / 2)
+                      }
+                    })
+                  }}
+                  className="w-full rounded border border-(--color-elevated-border) bg-(--color-input-bg) px-2 py-1 text-sm"
+                />
+              </label>
+            </div>
           ) : null}
 
           <button
