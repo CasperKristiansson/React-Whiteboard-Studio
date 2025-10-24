@@ -1,5 +1,6 @@
-import type { Vec2, LineShape, ArrowShape } from '../../types'
+import type { ArrowShape, LineShape, RGBA, Vec2 } from '../../types'
 import { createShapeId, useAppStore, type Tool } from '../../state/store'
+import { getDefaultStrokeColor } from '../../utils/theme-colors'
 
 export type PolylineState = {
   id: string
@@ -10,9 +11,8 @@ export type PolylineState = {
   createdAt: number
   zIndex: number
   locked: boolean
+  stroke: RGBA
 }
-
-const DEFAULT_STROKE = { r: 148, g: 163, b: 184, a: 1 }
 
 export const beginPolyline = (
   tool: Extract<Tool, 'line' | 'arrow'>,
@@ -22,6 +22,7 @@ export const beginPolyline = (
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()
+  const stroke = getDefaultStrokeColor()
 
   const shape: LineShape | ArrowShape =
     tool === 'arrow'
@@ -35,7 +36,7 @@ export const beginPolyline = (
           ],
           rotation: 0,
           zIndex: timestamp,
-          stroke: DEFAULT_STROKE,
+          stroke,
           strokeWidth: 1.5,
           headSize: 16,
           createdAt: timestamp,
@@ -51,7 +52,7 @@ export const beginPolyline = (
           ],
           rotation: 0,
           zIndex: timestamp,
-          stroke: DEFAULT_STROKE,
+          stroke,
           strokeWidth: 1.5,
           createdAt: timestamp,
           updatedAt: timestamp,
@@ -68,6 +69,7 @@ export const beginPolyline = (
     createdAt: timestamp,
     zIndex: timestamp,
     locked: false,
+    stroke,
   }
 }
 
@@ -86,7 +88,7 @@ const applyPolylineShape = (state: PolylineState, points: Vec2[]) => {
     points: relativePoints,
     rotation: 0,
     zIndex: state.zIndex,
-    stroke: DEFAULT_STROKE,
+    stroke: state.stroke,
     strokeWidth: 1.5,
     createdAt: state.createdAt,
     updatedAt: Date.now(),
@@ -171,7 +173,7 @@ export const finalizePolyline = (state: PolylineState) => {
           points: relativePoints,
           rotation: 0,
           zIndex: state.zIndex,
-          stroke: DEFAULT_STROKE,
+          stroke: state.stroke,
           strokeWidth: 1.5,
           headSize: 16,
           createdAt: state.createdAt,
@@ -184,7 +186,7 @@ export const finalizePolyline = (state: PolylineState) => {
           points: relativePoints,
           rotation: 0,
           zIndex: state.zIndex,
-          stroke: DEFAULT_STROKE,
+          stroke: state.stroke,
           strokeWidth: 1.5,
           createdAt: state.createdAt,
           updatedAt: Date.now(),

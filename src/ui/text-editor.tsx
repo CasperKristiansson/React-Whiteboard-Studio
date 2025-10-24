@@ -95,6 +95,14 @@ const TextEditor = ({
     [cancel, commit],
   )
 
+  const textColor = useMemo(() => {
+    const color = shape.fill ?? shape.stroke
+    if (!color) return undefined
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${
+      typeof color.a === 'number' ? color.a : 1
+    })`
+  }, [shape.fill, shape.stroke])
+
   const styles = useMemo<CSSProperties>(
     () => ({
       fontFamily: shape.font.family,
@@ -106,6 +114,13 @@ const TextEditor = ({
           : undefined,
       lineHeight: shape.lineHeight ?? undefined,
       textAlign: shape.align ?? 'left',
+      color: textColor,
+      fontStyle: shape.italic ? 'italic' : undefined,
+      textDecoration: shape.underline ? 'underline' : undefined,
+      backgroundColor: 'transparent',
+      border: 'none',
+      outline: 'none',
+      padding: 0,
     }),
     [
       scale,
@@ -113,8 +128,11 @@ const TextEditor = ({
       shape.font.family,
       shape.font.size,
       shape.font.weight,
+      shape.italic,
       shape.letterSpacing,
       shape.lineHeight,
+      shape.underline,
+      textColor,
     ],
   )
 
@@ -124,13 +142,13 @@ const TextEditor = ({
       style={{
         left: bounds.left,
         top: bounds.top,
-        width: Math.max(120, bounds.width),
-        height: Math.max(48, bounds.height),
+        width: bounds.width,
+        height: bounds.height,
       }}
     >
       <textarea
         ref={textareaRef}
-        className="pointer-events-auto h-full w-full resize-none rounded border border-(--color-elevated-border) bg-(--color-input-bg)/90 p-2 text-(--color-app-foreground) shadow-sm backdrop-blur focus:ring-2 focus:ring-(--color-accent) focus:outline-none"
+        className="pointer-events-auto h-full w-full resize-none rounded-none border-none bg-transparent p-0 text-[inherit] focus:outline-none"
         style={styles}
         value={value}
         onChange={handleChange}

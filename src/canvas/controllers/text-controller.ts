@@ -1,6 +1,6 @@
 import type { Vec2 } from '../../types'
-import { DEFAULT_FILL, DEFAULT_STROKE } from '../../types/shapes'
 import { createShapeId, useAppStore } from '../../state/store'
+import { getDefaultTextColor } from '../../utils/theme-colors'
 import { updateTextShapeBounds } from '../../utils/text-measure'
 
 export type TextCreationState = {
@@ -23,6 +23,7 @@ export const beginText = (
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()
+  const textColor = getDefaultTextColor()
 
   store.addShape({
     id,
@@ -31,9 +32,9 @@ export const beginText = (
     box: { ...DEFAULT_TEXT_BOX },
     rotation: 0,
     zIndex: timestamp,
-    stroke: DEFAULT_STROKE,
+    stroke: textColor,
     strokeWidth: 1,
-    fill: DEFAULT_FILL,
+    fill: textColor,
     text: '',
     font: {
       family: DEFAULT_FONT.family,

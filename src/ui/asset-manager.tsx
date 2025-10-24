@@ -21,7 +21,7 @@ import {
   revokeAssetUrl,
 } from '../services/assets'
 import { createShapeId } from '../state/store'
-import { DEFAULT_STROKE } from '../types/shapes'
+import { getDefaultStrokeColor } from '../utils/theme-colors'
 import { useErrorStore } from '../state/error'
 import { toAppError } from '../errors'
 import { LuUpload, LuMoveRight, LuLayers } from 'react-icons/lu'
@@ -181,6 +181,8 @@ const AssetManager = ({
         y: viewport.y + 100,
       }
 
+      const stroke = getDefaultStrokeColor()
+
       addShape({
         id: shapeId,
         type: 'image',
@@ -188,7 +190,7 @@ const AssetManager = ({
         size: { x: width, y: height },
         rotation: 0,
         zIndex: now,
-        stroke: DEFAULT_STROKE,
+        stroke,
         strokeWidth: 0,
         assetId: asset.id,
         objectFit: 'contain',

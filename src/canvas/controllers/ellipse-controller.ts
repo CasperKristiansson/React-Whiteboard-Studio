@@ -1,6 +1,9 @@
 import type { Vec2 } from '../../types'
-import { DEFAULT_FILL, DEFAULT_STROKE } from '../../types/shapes'
 import { createShapeId, useAppStore } from '../../state/store'
+import {
+  getDefaultFillColor,
+  getDefaultStrokeColor,
+} from '../../utils/theme-colors'
 
 export type EllipseDragState = {
   id: string
@@ -19,6 +22,8 @@ export const beginEllipse = (
   const timestamp = Date.now()
   const id = createShapeId()
   const store = useAppStore.getState()
+  const stroke = getDefaultStrokeColor()
+  const fill = getDefaultFillColor()
 
   store.addShape({
     id,
@@ -28,9 +33,9 @@ export const beginEllipse = (
     ry: 0,
     rotation: 0,
     zIndex: timestamp,
-    stroke: DEFAULT_STROKE,
+    stroke,
     strokeWidth: 1.5,
-    fill: DEFAULT_FILL,
+    fill,
     createdAt: timestamp,
     updatedAt: timestamp,
   })

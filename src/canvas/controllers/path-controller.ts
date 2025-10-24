@@ -1,7 +1,7 @@
-import type { Vec2 } from '../../types'
-import { DEFAULT_STROKE } from '../../types/shapes'
+import type { RGBA, Vec2 } from '../../types'
 import { createShapeId, useAppStore } from '../../state/store'
 import { ramerDouglasPeucker } from '../../utils/rdp'
+import { getDefaultStrokeColor } from '../../utils/theme-colors'
 
 export type PathState = {
   id: string
@@ -12,6 +12,7 @@ export type PathState = {
   zIndex: number
   committed: boolean
   smoothingEpsilon: number
+  stroke: RGBA
 }
 
 const SAMPLE_DISTANCE = 1.5
@@ -23,6 +24,7 @@ export const beginPath = (point: Vec2, pointerId: number): PathState => {
   const store = useAppStore.getState()
   const smoothingEpsilon =
     store.settings.pathSmoothingEpsilon ?? DEFAULT_SMOOTHING_EPSILON
+  const stroke = getDefaultStrokeColor()
 
   store.addShape({
     id,
@@ -31,7 +33,7 @@ export const beginPath = (point: Vec2, pointerId: number): PathState => {
     d: [{ x: 0, y: 0 }],
     rotation: 0,
     zIndex: timestamp,
-    stroke: DEFAULT_STROKE,
+    stroke,
     strokeWidth: 1.5,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -46,6 +48,7 @@ export const beginPath = (point: Vec2, pointerId: number): PathState => {
     zIndex: timestamp,
     committed: false,
     smoothingEpsilon,
+    stroke,
   }
 }
 
@@ -92,7 +95,7 @@ export const updatePath = (
     d: relativePoints,
     rotation: 0,
     zIndex: state.zIndex,
-    stroke: DEFAULT_STROKE,
+    stroke: state.stroke,
     strokeWidth: 1.5,
     createdAt: state.createdAt,
     updatedAt: Date.now(),
@@ -127,7 +130,7 @@ export const finalizePath = (state: PathState) => {
     d: relativePoints,
     rotation: 0,
     zIndex: state.zIndex,
-    stroke: DEFAULT_STROKE,
+    stroke: state.stroke,
     strokeWidth: 1.5,
     createdAt: state.createdAt,
     updatedAt: Date.now(),

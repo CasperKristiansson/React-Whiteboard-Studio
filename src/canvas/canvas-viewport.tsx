@@ -319,6 +319,7 @@ export const CanvasViewport = () => {
     const sorted = [...shapes].sort((a, b) => a.zIndex - b.zIndex)
 
     const elements = sorted.map((shape) => {
+      if (editingTextId && shape.id === editingTextId) return null
       if (shape.hidden) return null
 
       switch (shape.type) {
@@ -477,7 +478,7 @@ export const CanvasViewport = () => {
                     ? 'end'
                     : 'start'
               }
-              dominantBaseline="hanging"
+              dominantBaseline="text-before-edge"
             >
               {shape.text}
             </text>
@@ -489,7 +490,14 @@ export const CanvasViewport = () => {
     })
 
     return elements.filter(Boolean)
-  }, [shapes, toCssColor, viewport.x, viewport.y, viewport.scale])
+  }, [
+    editingTextId,
+    shapes,
+    toCssColor,
+    viewport.x,
+    viewport.y,
+    viewport.scale,
+  ])
 
   const selectedShapes = useMemo<Shape[]>(
     () => shapes.filter((shape) => selectionIds.includes(shape.id)),
@@ -931,6 +939,7 @@ export const CanvasViewport = () => {
       panModifierPressed.current ||
       event.metaKey ||
       (!isMacPlatform && event.ctrlKey)
+    const storeState = useAppStore.getState()
     const shouldPan =
       modifierHeld || event.pointerType === 'touch' || activeTool !== 'select'
 
@@ -941,6 +950,32 @@ export const CanvasViewport = () => {
         pointerId: event.pointerId,
         last: { x: event.clientX, y: event.clientY },
       }
+      document.body.style.cursor = 'grabbing'
+      event.preventDefault()
+      return
+    }
+
+    const hit = hitTestShapes(storeState.document.shapes, worldPoint)
+    const isAlreadySelected = hit ? selectionIds.includes(hit.id) : false
+
+    if (hit && !isAlreadySelected) {
+      select([hit.id], event.shiftKey ? 'toggle' : 'set')
+    }
+
+    if (hit) {
+      const targetSelection = selectionIds.includes(hit.id)
+        ? selectedShapes
+        : [...selectedShapes, hit]
+
+      const snapshot = createTransformSnapshot(targetSelection)
+      transformState.current = {
+        mode: 'move',
+        pointerId: event.pointerId,
+        snapshot,
+        originalBounds: snapshot.selectionBounds,
+        startWorld: worldPoint,
+      }
+      node.setPointerCapture(event.pointerId)
       document.body.style.cursor = 'grabbing'
       event.preventDefault()
       return
@@ -999,6 +1034,30 @@ export const CanvasViewport = () => {
       sendSelectionBackward,
       sendSelectionToBack,
     ],
+  )
+
+  const handleDoubleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (activeTool !== 'select' || editingTextId) return
+      const node = containerRef.current
+      if (!node) return
+
+      const rect = node.getBoundingClientRect()
+      const screenPoint = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      }
+      const store = useAppStore.getState()
+      const worldPoint = screenPointToWorld(screenPoint, store.viewport)
+      const hit = hitTestShapes(store.document.shapes, worldPoint)
+      if (!hit || hit.type !== 'text') return
+
+      event.preventDefault()
+      event.stopPropagation()
+      select([hit.id], 'set')
+      setEditingTextId(hit.id)
+    },
+    [activeTool, editingTextId, select],
   )
 
   const handlePointerMove: PointerEventHandler<HTMLDivElement> = (event) => {
@@ -1651,6 +1710,7 @@ export const CanvasViewport = () => {
       onPointerCancel={handlePointerCancel}
       onPointerLeave={handlePointerUp}
       onContextMenu={handleContextMenu}
+      onDoubleClick={handleDoubleClick}
     >
       {settings.gridVisible ? <GridLayer viewport={viewport} /> : null}
 
