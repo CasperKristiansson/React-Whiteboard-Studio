@@ -6,6 +6,7 @@ import { useKeyboardShortcuts } from './app/keyboard'
 import TopNavigation from './ui/top-navigation'
 import ThemeToggle from './components/theme-toggle'
 import TitleBadge from './components/title-badge'
+import ShapeInspector from './ui/shape-inspector'
 import DebugOverlay from './dev/debug-overlay'
 import ErrorToasts from './ui/error-toasts'
 import {
@@ -140,6 +141,7 @@ function App() {
               <ThemeToggle />
             </div>
           </div>
+          <ShapeInspector />
         </main>
         <DebugOverlay enabled={debugEnabled} />
         <ErrorToasts />
