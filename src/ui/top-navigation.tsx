@@ -35,6 +35,7 @@ type NavDropdownProps = {
   children: ReactNode
   align?: 'left' | 'right'
   contentClassName?: string
+  disabled?: boolean
 }
 
 const NavDropdown = ({
@@ -45,30 +46,39 @@ const NavDropdown = ({
   children,
   align = 'left',
   contentClassName,
+  disabled = false,
 }: NavDropdownProps) => {
+  const isExpanded = !disabled && isOpen
   return (
     <div className="relative">
       <button
         type="button"
         className={clsx(
           'flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
-          isOpen
-            ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow'
-            : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
+          disabled
+            ? 'cursor-not-allowed border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-button-muted-text) opacity-50'
+            : isOpen
+              ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow'
+              : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
         )}
-        aria-expanded={isOpen}
+        aria-expanded={isExpanded}
         aria-controls={`${id}-menu`}
-        onClick={() => onToggle(id)}
+        aria-disabled={disabled}
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return
+          onToggle(id)
+        }}
       >
         <span>{label}</span>
         <LuChevronDown
           className={clsx(
             'h-3.5 w-3.5 transition-transform',
-            isOpen && 'rotate-180',
+            isExpanded && 'rotate-180',
           )}
         />
       </button>
-      {isOpen ? (
+      {isExpanded ? (
         <div
           id={`${id}-menu`}
           role="menu"
@@ -495,6 +505,7 @@ const TopNavigation = () => {
           label="Assets"
           isOpen={openMenu === 'assets'}
           onToggle={toggleMenu}
+          disabled
         >
           <div className="max-w-full">
             <AssetManager variant="dropdown" />
@@ -588,8 +599,8 @@ const TopNavigation = () => {
                 </span>
               </button>
             </section>
-            <ImportDialog />
-            <ExportDialog />
+            <ImportDialog disabled />
+            <ExportDialog disabled />
           </div>
         </NavDropdown>
       </nav>

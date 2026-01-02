@@ -1,4 +1,5 @@
 import { useCallback, useState, useRef, type ChangeEvent } from 'react'
+import clsx from 'clsx'
 
 import { importProjectFromJson } from '../import/json'
 import { selectProjectId, useAppSelector, useAppStore } from '../state/store'
@@ -6,7 +7,7 @@ import { useErrorStore } from '../state/error'
 import { toAppError } from '../errors'
 import { LuUpload } from 'react-icons/lu'
 
-const ImportDialog = () => {
+const ImportDialog = ({ disabled = false }: { disabled?: boolean }) => {
   const projectId = useAppSelector(selectProjectId)
   const replaceDocument = useAppStore((state) => state.replaceDocument)
   const markClean = useAppStore((state) => state.markClean)
@@ -59,7 +60,13 @@ const ImportDialog = () => {
   )
 
   return (
-    <section className="rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow">
+    <section
+      className={clsx(
+        'rounded-3xl border border-(--color-elevated-border) bg-(--color-elevated-bg) p-4 shadow',
+        disabled && 'opacity-60',
+      )}
+      aria-disabled={disabled}
+    >
       <header className="mb-4 space-y-3">
         <div>
           <h2 className="text-base font-semibold text-(--color-app-foreground)">
@@ -72,8 +79,8 @@ const ImportDialog = () => {
         <button
           type="button"
           onClick={handleTrigger}
-          className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)"
-          disabled={!projectId || isImporting}
+          className="flex w-full items-center justify-center gap-2 rounded border border-(--color-button-border) bg-(--color-button-bg) px-3 py-1 text-xs font-medium text-(--color-button-text) shadow transition hover:bg-(--color-button-hover-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={disabled || !projectId || isImporting}
         >
           <LuUpload className="h-4 w-4" />
           {isImporting ? 'Importing…' : 'Import .wb.json'}
@@ -83,6 +90,7 @@ const ImportDialog = () => {
           type="file"
           accept="application/json"
           hidden
+          disabled={disabled}
           onChange={handleFileChange}
         />
       </header>

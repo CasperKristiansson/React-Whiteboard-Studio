@@ -33,6 +33,7 @@ const TOOL_OPTIONS: {
   label: string
   shortcut: string
   icon: IconType
+  disabled?: boolean
 }[] = [
   { value: 'select', label: 'Select', shortcut: 'V', icon: LuPointer },
   {
@@ -46,7 +47,7 @@ const TOOL_OPTIONS: {
   { value: 'arrow', label: 'Arrow', shortcut: 'A', icon: LuArrowUpRight },
   { value: 'path', label: 'Path', shortcut: 'P', icon: LuPenTool },
   { value: 'text', label: 'Text', shortcut: 'T', icon: LuType },
-  { value: 'image', label: 'Image', shortcut: 'I', icon: LuImage },
+  { value: 'image', label: 'Image', shortcut: 'I', icon: LuImage, disabled: true },
 ]
 
 const ToolbarButton = ({
@@ -56,6 +57,7 @@ const ToolbarButton = ({
   icon: Icon,
   active,
   onSelect,
+  disabled = false,
   fullWidth = false,
 }: {
   value: Tool
@@ -64,6 +66,7 @@ const ToolbarButton = ({
   icon: IconType
   active: boolean
   onSelect: (tool: Tool) => void
+  disabled?: boolean
   fullWidth?: boolean
 }) => {
   return (
@@ -72,13 +75,20 @@ const ToolbarButton = ({
       className={clsx(
         'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-(--color-accent)',
         fullWidth && 'w-full justify-start',
-        active
-          ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
-          : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
+        disabled
+          ? 'cursor-not-allowed border-(--color-elevated-border) bg-(--color-button-bg) text-(--color-muted-foreground) opacity-50'
+          : active
+            ? 'border-(--color-button-active-border) bg-(--color-button-active-bg) text-(--color-button-text) shadow-sm'
+            : 'border-transparent bg-(--color-button-bg) text-(--color-button-muted-text) hover:bg-(--color-button-hover-bg)',
       )}
       aria-pressed={active}
       aria-label={`${label} tool (${shortcut})`}
-      onClick={() => onSelect(value)}
+      aria-disabled={disabled}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return
+        onSelect(value)
+      }}
     >
       <Icon className="h-4 w-4" />
       <span className="font-medium">{label}</span>
@@ -292,6 +302,7 @@ const Toolbar = ({
             shortcut={tool.shortcut}
             icon={tool.icon}
             active={tool.value === activeTool}
+            disabled={tool.disabled}
             onSelect={(nextTool) => {
               setTool(nextTool)
               onToolSelect?.(nextTool)
